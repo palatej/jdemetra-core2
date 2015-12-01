@@ -110,9 +110,9 @@ public class DurbinKoopmanInitializer implements OrdinaryFilter.Initializer {
                 pe.set(y - measurement.ZX(pos, state.a()));
             }
         }
-        measurement.ZM(pos, state.P().subMatrix(), pe.C());
+        measurement.ZM(pos, state.P().subMatrix(), pe.M());
         if (pe.isDiffuse()) {
-            measurement.ZM(pos, state.Pi().subMatrix(), pe.Ci());
+            measurement.ZM(pos, state.Pi().subMatrix(), pe.Mi());
         }
         return true;
     }
@@ -193,7 +193,7 @@ public class DurbinKoopmanInitializer implements OrdinaryFilter.Initializer {
         // variance
 
         double f = pe.getVariance(), e = pe.get();
-        DataBlock C = pe.C();
+        DataBlock C = pe.M();
         SymmetricMatrix.addXaXt(state.P(), -1 / f, C);
 
         // state
@@ -212,7 +212,7 @@ public class DurbinKoopmanInitializer implements OrdinaryFilter.Initializer {
 //        double f1 = 1 / pe.fi;
 //        double f2 = -pe.f * f1 * f1;
         double f = pe.getVariance(), e = pe.get(), fi = pe.getDiffuseNorm2();
-        DataBlock C = pe.C(), Ci = pe.Ci();
+        DataBlock C = pe.M(), Ci = pe.Mi();
 
         // Pi = Pi - f1* (Ci)(Ci)'
         SymmetricMatrix.addXaXt(state.Pi(), -1 / fi, Ci);

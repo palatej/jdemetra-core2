@@ -20,7 +20,6 @@ package ec.tstoolkit2.ssf.univariate;
 
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.IReadDataBlock;
-import ec.tstoolkit.data.ReadDataBlock;
 import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.DataBlockResults;
 import ec.tstoolkit2.ssf.DataResults;
@@ -82,7 +81,7 @@ public class DefaultFilteringResults implements IFilteringResults, IStateResults
     public void save(int t, PredictionError pe) {
         e.save(t, pe.get());
         f.save(t, pe.getVariance());
-        C.save(t, pe.C());
+        C.save(t, pe.M());
     }
 
     @Override
@@ -97,10 +96,12 @@ public class DefaultFilteringResults implements IFilteringResults, IStateResults
         range.add(t);
     }
 
+    @Override
     public double error(int pos) {
         return e.get(pos);
     }
 
+    @Override
     public double errorVariance(int pos) {
         return f.get(pos);
     }
@@ -113,14 +114,17 @@ public class DefaultFilteringResults implements IFilteringResults, IStateResults
         return f;
     }
 
+    @Override
     public DataBlock a(int pos) {
         return A.datablock(pos);
     }
 
-    public DataBlock c(int pos) {
+    @Override
+    public DataBlock M(int pos) {
         return C.datablock(pos);
     }
 
+    @Override
     public SubMatrix P(int pos) {
         return P.subMatrix(pos);
     }

@@ -36,7 +36,7 @@ public class DefaultDiffuseSquareRootFilteringResults extends DefaultFilteringRe
 
     private final DataBlockResults Ci;
     private final DataBlocksResults B;
-    private DataResults fi;
+    private final DataResults fi;
     private int enddiffuse;
 
     private DefaultDiffuseSquareRootFilteringResults(boolean var) {
@@ -69,7 +69,7 @@ public class DefaultDiffuseSquareRootFilteringResults extends DefaultFilteringRe
     public void save(int t, DiffusePredictionError pe) {
         super.save(t, pe);
         fi.save(t, pe.getDiffuseNorm2());
-        Ci.save(t, pe.Ci());
+        Ci.save(t, pe.Mi());
     }
 
     @Override
@@ -90,14 +90,17 @@ public class DefaultDiffuseSquareRootFilteringResults extends DefaultFilteringRe
     }
 
 
-    public double diffuseNorm(int pos) {
+    @Override
+    public double diffuseNorm2(int pos) {
         return fi.get(pos);
     }
 
-    public DataBlock ci(int pos) {
+    @Override
+    public DataBlock Mi(int pos) {
         return Ci.datablock(pos);
     }
  
+    @Override
     public SubMatrix B(int pos) {
         return B.subMatrix(pos);
     }
@@ -108,6 +111,7 @@ public class DefaultDiffuseSquareRootFilteringResults extends DefaultFilteringRe
         enddiffuse = 0;
     }
 
+    @Override
     public int getEndDiffusePosition() {
         return enddiffuse;
     }

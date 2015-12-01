@@ -32,7 +32,7 @@ public class DiffusePredictionError extends PredictionError {
     /**
      * Ci = Pi Z'
      */
-    private final DataBlock Ci;
+    private final DataBlock Mi;
 
     /**
      *
@@ -40,11 +40,11 @@ public class DiffusePredictionError extends PredictionError {
      */
     public DiffusePredictionError(final int dim) {
         super(dim);
-        Ci = new DataBlock(dim);
+        Mi = new DataBlock(dim);
     }
     
-    public DataBlock Ci(){
-        return this.Ci;
+    public DataBlock Mi(){
+        return this.Mi;
     }
     
     public double getDiffuseNorm2(){

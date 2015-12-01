@@ -16,6 +16,8 @@
  */
 package ec.tstoolkit2.ssf.dk;
 
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.univariate.*;
 import ec.tstoolkit2.ssf.State;
 
@@ -24,55 +26,153 @@ import ec.tstoolkit2.ssf.State;
  * @author Jean Palate
  */
 public class CompositeDiffuseFilteringResults implements IDiffuseFilteringResults {
-    
-    
+
     private final IDiffuseFilteringResults[] subresults;
-    public CompositeDiffuseFilteringResults(final IDiffuseFilteringResults... subresults){
-        this.subresults=subresults;
+
+    public CompositeDiffuseFilteringResults(final IDiffuseFilteringResults... subresults) {
+        this.subresults = subresults;
     }
 
     @Override
     public void close(int pos) {
-        for (int i=0; i<subresults.length; ++i){
+        for (int i = 0; i < subresults.length; ++i) {
             subresults[i].close(pos);
         }
     }
 
     @Override
     public void clear() {
-        for (int i=0; i<subresults.length; ++i){
+        for (int i = 0; i < subresults.length; ++i) {
             subresults[i].clear();
         }
     }
 
-
     @Override
     public void save(int t, DiffusePredictionError pe) {
-        for (int i=0; i<subresults.length; ++i){
+        for (int i = 0; i < subresults.length; ++i) {
             subresults[i].save(t, pe);
         }
     }
 
     @Override
     public void save(int t, DiffuseState state) {
-        for (int i=0; i<subresults.length; ++i){
+        for (int i = 0; i < subresults.length; ++i) {
             subresults[i].save(t, state);
         }
     }
 
     @Override
     public void save(int t, PredictionError pe) {
-         for (int i=0; i<subresults.length; ++i){
+        for (int i = 0; i < subresults.length; ++i) {
             subresults[i].save(t, pe);
         }
-   }
+    }
 
     @Override
     public void save(int t, State state) {
-         for (int i=0; i<subresults.length; ++i){
+        for (int i = 0; i < subresults.length; ++i) {
             subresults[i].save(t, state);
         }
     }
-    
-    
+
+    @Override
+    public int getEndDiffusePosition() {
+        for (int i = 0; i < subresults.length; ++i) {
+            int epos = subresults[i].getEndDiffusePosition();
+            if (epos >= 0) {
+                return epos;
+            }
+        }
+        return -1;
+
+    }
+
+    @Override
+    public DataBlock a(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            DataBlock a = subresults[i].a(pos);
+            if (a != null) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SubMatrix Pi(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            SubMatrix P = subresults[i].Pi(pos);
+            if (P != null) {
+                return P;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public DataBlock M(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            DataBlock c = subresults[i].M(pos);
+            if (c != null) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public DataBlock Mi(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            DataBlock c = subresults[i].Mi(pos);
+            if (c != null) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SubMatrix P(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            SubMatrix P = subresults[i].P(pos);
+            if (P != null) {
+                return P;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public double error(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            double d = subresults[i].error(pos);
+            if (Double.isFinite(d)) {
+                return d;
+            }
+        }
+        return Double.NaN;
+    }
+
+    @Override
+    public double errorVariance(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            double d = subresults[i].errorVariance(pos);
+            if (Double.isFinite(d)) {
+                return d;
+            }
+        }
+        return Double.NaN;
+    }
+
+    @Override
+    public double diffuseNorm2(int pos) {
+        for (int i = 0; i < subresults.length; ++i) {
+            double d = subresults[i].diffuseNorm2(pos);
+            if (Double.isFinite(d)) {
+                return d;
+            }
+        }
+        return Double.NaN;
+    }
+
 }

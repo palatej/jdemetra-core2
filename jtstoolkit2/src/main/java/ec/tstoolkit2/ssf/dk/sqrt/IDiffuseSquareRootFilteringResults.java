@@ -18,20 +18,17 @@
  */
 package ec.tstoolkit2.ssf.dk.sqrt;
 
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.akf.AugmentedState;
 import ec.tstoolkit2.ssf.dk.DiffusePredictionError;
-import ec.tstoolkit2.ssf.univariate.ISsf;
-import ec.tstoolkit2.ssf.univariate.ISsfData;
+import ec.tstoolkit2.ssf.dk.IBaseDiffuseFilteringResults;
 
 /**
  *
  * @author Jean Palate
  */
-public interface IDiffuseSquareRootFilteringResults {
-    /**
-     *
-     */
-    void clear();
+public interface IDiffuseSquareRootFilteringResults extends IBaseDiffuseFilteringResults {
     /**
      *
      * @param pos
@@ -52,4 +49,9 @@ public interface IDiffuseSquareRootFilteringResults {
      */
     void save(int t, AugmentedState state);
     
+
+    default SubMatrix B(int pos) {
+        return null;
+    }
+
 }

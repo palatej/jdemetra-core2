@@ -28,20 +28,20 @@ public class DiffuseSmoother {
     private ISsfDynamics dynamics;
     private ISsfMeasurement measurement;
     private ISmoothingResults srslts;
-    private DefaultDiffuseFilteringResults frslts;
+    private IDiffuseFilteringResults frslts;
 
     private double e, f, fi;
     private DataBlock C, Ci, Rf, Ri;
     private Matrix N0, N1, N2;
-    private boolean missing, calcvar = true;
+    private boolean missing, hasinfo, calcvar = true;
     private int pos;
 
     public boolean process(final ISsf ssf, final ISsfData data, ISmoothingResults sresults) {
-        DefaultDiffuseFilteringResults fresults = DkToolkit.filter(ssf, data, true);
+        IDiffuseFilteringResults fresults = DkToolkit.filter(ssf, data, true);
         return process(ssf, data.getCount(), fresults, sresults);
     }
 
-    public boolean process(ISsf ssf, final int endpos, DefaultDiffuseFilteringResults results, ISmoothingResults sresults) {
+    public boolean process(ISsf ssf, final int endpos, IDiffuseFilteringResults results, ISmoothingResults sresults) {
         frslts = results;
         srslts = sresults;
         initFilter(ssf);
@@ -51,7 +51,9 @@ public class DiffuseSmoother {
         while (--pos >= 0) {
             loadInfo();
             iterate();
-            srslts.save(pos, state);
+            if (hasinfo) {
+                srslts.save(pos, state);
+            }
         }
 
         return true;
@@ -81,14 +83,19 @@ public class DiffuseSmoother {
     private void loadInfo() {
         e = frslts.error(pos);
         f = frslts.errorVariance(pos);
-        fi = frslts.diffuseNorm(pos);
-        C.copy(frslts.c(pos));
-        Ci.copy(frslts.ci(pos));
+        fi = frslts.diffuseNorm2(pos);
+        C.copy(frslts.M(pos));
+        Ci.copy(frslts.Mi(pos));
         if (fi != 0) {
             C.addAY(-f / fi, Ci);
         }
         missing = !DescriptiveStatistics.isFinite(e);
-        state.a().copy(frslts.a(pos));
+        DataBlock fa = frslts.a(pos);
+        hasinfo = fa != null;
+        if (!hasinfo) {
+            return;
+        }
+        state.a().copy(fa);
         if (calcvar) {
             state.P().subMatrix().copy(frslts.P(pos));
             state.Pi().subMatrix().copy(frslts.Pi(pos));

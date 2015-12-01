@@ -19,13 +19,13 @@ public class DiffuseFilteringErrors extends FilteringErrors implements IDiffuseF
     private int enddiffuse;
 
     public DiffuseFilteringErrors(boolean normalized) {
-super(normalized);    }
+        super(normalized);
+    }
 
     @Override
     public void close(int pos) {
-        enddiffuse=pos;
+        enddiffuse = pos;
     }
-
 
     @Override
     public void save(int t, DiffuseState state) {
@@ -33,11 +33,17 @@ super(normalized);    }
 
     @Override
     public void save(int t, DiffusePredictionError pe) {
- super.save(t,pe);    }
+        super.save(t, pe);
+    }
 
     @Override
     public void clear() {
         super.clear();
-        enddiffuse=0;
+        enddiffuse = 0;
+    }
+
+    @Override
+    public int getEndDiffusePosition() {
+        return enddiffuse;
     }
 }

@@ -103,7 +103,7 @@ public class OrdinaryFilter {
             // K = PZ'/f
             // computes (ZP)' in K'. Missing values are set to 0 
             // Z~v x r, P~r x r, K~r x v
-            DataBlock C = pe.C();
+            DataBlock C = pe.M();
             // computes ZPZ'; results in pe_.L
             //measurement.ZVZ(pos_, state_.P.subMatrix(), F);
             measurement.ZM(pos, state.P().subMatrix(), C);
@@ -128,7 +128,7 @@ public class OrdinaryFilter {
         }
         double e = pe.get();
         double v = pe.getVariance();
-        DataBlock C = pe.C();
+        DataBlock C = pe.M();
 
         // P = P - (M)* F^-1 *(M)' --> Symmetric
         // PZ'(LL')^-1 ZP' =PZ'L'^-1*L^-1*ZP'
@@ -140,7 +140,7 @@ public class OrdinaryFilter {
     protected void update(DataBlock x, SubMatrix states) {
         update();
         double v = pe.getVariance();
-        DataBlock C = pe.C();
+        DataBlock C = pe.M();
         for (int i = 0; i < x.getLength(); ++i) {
             double e = x.get(i);
             states.column(i).addAY(e / v, C);

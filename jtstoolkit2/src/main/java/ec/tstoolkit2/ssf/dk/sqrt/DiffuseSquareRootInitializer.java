@@ -156,7 +156,7 @@ public class DiffuseSquareRootInitializer implements OrdinaryFilter.Initializer 
 
     private void update0() {
         double f = pe.getVariance(), e = pe.get();
-        DataBlock C = pe.C();
+        DataBlock C = pe.M();
         Matrix P = astate.P();
         SymmetricMatrix.addXaXt(P, -1 / f, C);
 
@@ -170,7 +170,7 @@ public class DiffuseSquareRootInitializer implements OrdinaryFilter.Initializer 
 
     private void update1() {
         double fi = pe.getDiffuseNorm2(), f = pe.getVariance(), e = pe.get();
-        DataBlock C = pe.C(), Ci = pe.Ci();
+        DataBlock C = pe.M(), Ci = pe.Mi();
         // P = T P T' - 1/f*(TMf)(TMf)'+RQR'+f*(TMf/f-TMi/fi)(TMf/f-TMi/fi)'
         SymmetricMatrix.addXaXt(astate.P(), -1 / f, C);
 
@@ -212,13 +212,13 @@ public class DiffuseSquareRootInitializer implements OrdinaryFilter.Initializer 
             }
         }
 
-        DataBlock C = pe.C();
+        DataBlock C = pe.M();
         measurement.ZM(pos, astate.P().subMatrix(), C);
         if (pe.isDiffuse()) {
             DataBlock z = zconstraints();
             SubMatrix B = constraints();
             ElementaryTransformations.fastRowGivens(z, B);
-            pe.Ci().setAY(z.get(0), B.column(0));
+            pe.Mi().setAY(z.get(0), B.column(0));
             // move right
             astate.dropDiffuseConstraint();
         }

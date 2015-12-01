@@ -16,7 +16,10 @@
 */
 package ec.tstoolkit2.ssf.univariate;
 
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.data.IReadDataBlock;
 import ec.tstoolkit.design.Development;
+import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.IStateResults;
 
 /**
@@ -38,4 +41,25 @@ public interface IFilteringResults extends IStateResults{
      *
      */
     void clear();
+    
+    default double error(int pos) {
+        return Double.NaN;
+    }
+
+    default double errorVariance(int pos) {
+        return Double.NaN;
+    }
+
+    default DataBlock a(int pos) {
+        return null;
+    }
+
+    default DataBlock M(int pos) {
+        return null;
+    }
+
+    default SubMatrix P(int pos) {
+        return null;
+    }
+
 }

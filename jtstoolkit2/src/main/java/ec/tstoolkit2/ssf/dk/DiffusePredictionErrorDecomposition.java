@@ -19,12 +19,8 @@ package ec.tstoolkit2.ssf.dk;
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.eco.Determinant;
 import ec.tstoolkit.eco.ILikelihood;
-import ec.tstoolkit2.ssf.IPredictionErrorDecomposition;
-import ec.tstoolkit2.ssf.ResidualsCumulator;
 import ec.tstoolkit2.ssf.akf.AugmentedState;
 import ec.tstoolkit2.ssf.dk.sqrt.IDiffuseSquareRootFilteringResults;
-import ec.tstoolkit2.ssf.univariate.ISsf;
-import ec.tstoolkit2.ssf.univariate.ISsfData;
 import ec.tstoolkit2.ssf.univariate.PredictionErrorDecomposition;
 
 /**
@@ -34,7 +30,7 @@ import ec.tstoolkit2.ssf.univariate.PredictionErrorDecomposition;
 public class DiffusePredictionErrorDecomposition extends PredictionErrorDecomposition implements IDiffuseFilteringResults, IDiffuseSquareRootFilteringResults {
 
     private final Determinant ddet = new Determinant();
-    private int nd, n;
+    private int nd, n, enddiffuse;
 
     public DiffusePredictionErrorDecomposition(boolean res) {
         super(res);
@@ -51,7 +47,7 @@ public class DiffusePredictionErrorDecomposition extends PredictionErrorDecompos
 //                System.arraycopy(res, 0, tmp, 0, n);
 //                ll.setResiduals(tmp);
 //            } else {
-                ll.setResiduals(res.getData());
+            ll.setResiduals(res.getData());
 //            }
         }
         return ll;
@@ -59,6 +55,7 @@ public class DiffusePredictionErrorDecomposition extends PredictionErrorDecompos
 
     @Override
     public void close(int pos) {
+        enddiffuse = pos;
     }
 
     @Override
@@ -67,6 +64,7 @@ public class DiffusePredictionErrorDecomposition extends PredictionErrorDecompos
         ddet.clear();
         nd = 0;
         n = 0;
+        enddiffuse = 0;
         res = null;
     }
 
@@ -97,6 +95,21 @@ public class DiffusePredictionErrorDecomposition extends PredictionErrorDecompos
 
     @Override
     public void save(int t, AugmentedState state) {
+    }
+
+    @Override
+    public int getEndDiffusePosition() {
+        return enddiffuse;
+    }
+
+    @Override
+    public DataBlock Mi(int pos) {
+        return null;
+    }
+
+    @Override
+    public double diffuseNorm2(int pos) {
+        return Double.NaN;
     }
 
 }

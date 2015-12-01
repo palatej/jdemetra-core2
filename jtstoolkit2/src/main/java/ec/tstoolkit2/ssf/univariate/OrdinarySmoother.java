@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.univariate;
 
@@ -22,6 +22,7 @@ import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockIterator;
 import ec.tstoolkit.data.DescriptiveStatistics;
 import ec.tstoolkit.maths.matrices.Matrix;
+import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit.maths.matrices.SymmetricMatrix;
 import ec.tstoolkit2.ssf.ISsfDynamics;
 import ec.tstoolkit2.ssf.ResultsRange;
@@ -38,17 +39,18 @@ public class OrdinarySmoother {
     private ISsfDynamics dynamics;
     private ISsfMeasurement measurement;
     private ISmoothingResults srslts;
-    private DefaultFilteringResults frslts;
+    private IFilteringResults frslts;
 
     private double err, errVariance;
-    private DataBlock C, R;
+    private DataBlock M, R;
     private Matrix N;
     private boolean missing, calcvar = true;
     private int pos, stop;
 
     public boolean process(ISsf ssf, ISsfData data) {
-        if (ssf.getDynamics().isDiffuse())
+        if (ssf.getDynamics().isDiffuse()) {
             return false;
+        }
         OrdinaryFilter filter = new OrdinaryFilter();
         DefaultFilteringResults fresults = DefaultFilteringResults.full();
         if (!filter.process(ssf, data, fresults)) {
@@ -56,36 +58,38 @@ public class OrdinarySmoother {
         }
         return process(ssf, 0, data.getCount(), fresults);
     }
-    
+
     public boolean process(ISsf ssf, DefaultFilteringResults results) {
-         if (ssf.getDynamics().isDiffuse())
+        if (ssf.getDynamics().isDiffuse()) {
             return false;
-       ResultsRange range = results.getRange();
+        }
+        ResultsRange range = results.getRange();
         return process(ssf, range.getStart(), range.getEnd(), results);
     }
-    
-    public boolean process(ISsf ssf, int start, int end, DefaultFilteringResults results) {
+
+    public boolean process(ISsf ssf, int start, int end, IFilteringResults results) {
         ISmoothingResults sresults;
         if (calcvar) {
             sresults = DefaultSmoothingResults.full();
         } else {
             sresults = DefaultSmoothingResults.light();
         }
-        
+
         return process(ssf, start, end, results, sresults);
     }
 
-    public boolean process(ISsf ssf, final int start, final int end, DefaultFilteringResults results, ISmoothingResults sresults) {
+    public boolean process(ISsf ssf, final int start, final int end, IFilteringResults results, ISmoothingResults sresults) {
         frslts = results;
         srslts = sresults;
-        stop=start;
+        stop = start;
         pos = end;
         initFilter(ssf);
         initSmoother(ssf);
         while (--pos >= stop) {
             loadInfo();
-            iterate();
-            srslts.save(pos, state);
+            if (iterate()) {
+                srslts.save(pos, state);
+            }
         }
 
         return true;
@@ -94,12 +98,12 @@ public class OrdinarySmoother {
     public ISmoothingResults getResults() {
         return srslts;
     }
-    
-    public DataBlock getFinalR(){
+
+    public DataBlock getFinalR() {
         return R;
     }
 
-    public Matrix getFinalN(){
+    public Matrix getFinalN() {
         return N;
     }
 
@@ -109,7 +113,7 @@ public class OrdinarySmoother {
         state.setInfo(StateInfo.Smoothed);
 
         R = new DataBlock(dim);
-        C = new DataBlock(dim);
+        M = new DataBlock(dim);
 
         if (calcvar) {
             N = Matrix.square(dim);
@@ -119,26 +123,32 @@ public class OrdinarySmoother {
     private void loadInfo() {
         err = frslts.error(pos);
         errVariance = frslts.errorVariance(pos);
-        C.copy(frslts.c(pos));
+        M.copy(frslts.M(pos));
         missing = !DescriptiveStatistics.isFinite(err);
     }
 
-    private void iterate() {
+    private boolean iterate() {
         iterateR();
+        if (calcvar) {
+            iterateN();
+        }
+        DataBlock fa = frslts.a(pos);
+        SubMatrix fP = frslts.P(pos);
+        if (fP == null) {
+            return false;
+        }
         // a = a + r*P
         DataBlock a = state.a();
+        a.copy(fa);
+        a.addProduct(R, fP.columns());
         if (calcvar) {
             // P = P-PNP
-            iterateN();
             Matrix P = state.P();
-            P.subMatrix().copy(frslts.P(pos));
+            P.subMatrix().copy(fP);
             Matrix V = SymmetricMatrix.quadraticForm(N, P);
             P.sub(V);
-            a.product(R, P.columns());
-        } else {
-            a.product(R, frslts.P(pos).columns());
         }
-        a.add(frslts.a(pos));
+        return true;
     }
     // 
 
@@ -147,7 +157,7 @@ public class OrdinarySmoother {
         // compute xT
         dynamics.XT(pos, x);
         // compute q=xT*c
-        double q = x.dot(C);
+        double q = x.dot(M);
         // remove q/f*Z
         measurement.XpZd(pos, x, -q / errVariance);
     }
@@ -168,11 +178,9 @@ public class OrdinarySmoother {
             XL(N.rows());
             XL(N.columns());
 
-            double cuc = SymmetricMatrix.quadraticForm(N, C);
-
             // Compute V = C'U
-            DataBlock v = new DataBlock(C.getLength());
-            v.product(N.columns(), C);
+            DataBlock v = new DataBlock(M.getLength());
+            v.product(N.columns(), M);
 
             DataBlockIterator columns = N.columns();
             DataBlock col = columns.getData();
@@ -215,7 +223,7 @@ public class OrdinarySmoother {
         dynamics.XT(pos, R);
         if (!missing && errVariance != 0) {
             // RT
-            double c = (err - R.dot(C)) / errVariance;
+            double c = (err - R.dot(M)) / errVariance;
             measurement.XpZd(pos, R, c);
         }
     }

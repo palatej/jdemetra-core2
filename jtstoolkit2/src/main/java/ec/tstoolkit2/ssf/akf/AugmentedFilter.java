@@ -76,7 +76,7 @@ public class AugmentedFilter {
         missing = data.isMissing(pos);
         if (missing) {
             pe.E().set(0);
-            pe.C().set(0);
+            pe.M().set(0);
             // pe_ = null;
             return false;
         } else {
@@ -84,7 +84,7 @@ public class AugmentedFilter {
             // K = PZ'/f
             // computes (ZP)' in K'. Missing values are set to 0 
             // Z~v x r, P~r x r, K~r x v
-            DataBlock C = pe.C();
+            DataBlock C = pe.M();
             // computes ZPZ'; results in pe_.L
             //measurement.ZVZ(pos_, state_.P.subMatrix(), F);
             measurement.ZM(pos, state.P().subMatrix(), C);
@@ -113,13 +113,13 @@ public class AugmentedFilter {
         // P = P - (M)* F^-1 *(M)' --> Symmetric
         // PZ'(LL')^-1 ZP' =PZ'L'^-1*L^-1*ZP'
         // A = a + (M)* F^-1 * v
-        state.a().addAY(e / v, pe.C());
+        state.a().addAY(e / v, pe.M());
         DataBlockIterator acols = state.B().columns();
         DataBlock acol = acols.getData();
         do {
-            acol.addAY(pe.E().get(acols.getPosition()) / v, pe.C());
+            acol.addAY(pe.E().get(acols.getPosition()) / v, pe.M());
         } while (acols.next());
-        update(state.P(), v, pe.C());//, state_.K.column(i));
+        update(state.P(), v, pe.M());//, state_.K.column(i));
     }
 
     /**

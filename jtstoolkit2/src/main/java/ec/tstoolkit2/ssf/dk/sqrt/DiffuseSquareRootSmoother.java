@@ -31,7 +31,7 @@ public class DiffuseSquareRootSmoother {
     private ISsfDynamics dynamics;
     private ISsfMeasurement measurement;
     private ISmoothingResults srslts;
-    private DefaultDiffuseSquareRootFilteringResults frslts;
+    private IDiffuseSquareRootFilteringResults frslts;
 
     private double e, f, fi;
     private DataBlock C, Ci, Rf, Ri;
@@ -40,11 +40,11 @@ public class DiffuseSquareRootSmoother {
     private int pos;
 
     public boolean process(final ISsf ssf, final ISsfData data, ISmoothingResults sresults) {
-        DefaultDiffuseSquareRootFilteringResults fresults = DkToolkit.sqrtFilter(ssf, data, true);
+        IDiffuseSquareRootFilteringResults fresults = DkToolkit.sqrtFilter(ssf, data, true);
         return process(ssf, data.getCount(), fresults, sresults);
     }
 
-    public boolean process(ISsf ssf, final int endpos, DefaultDiffuseSquareRootFilteringResults results, ISmoothingResults sresults) {
+    public boolean process(ISsf ssf, final int endpos, IDiffuseSquareRootFilteringResults results, ISmoothingResults sresults) {
         frslts = results;
         srslts = sresults;
         initFilter(ssf);
@@ -84,9 +84,9 @@ public class DiffuseSquareRootSmoother {
     private void loadInfo() {
         e = frslts.error(pos);
         f = frslts.errorVariance(pos);
-        fi = frslts.diffuseNorm(pos);
-        C.copy(frslts.c(pos));
-        Ci.copy(frslts.ci(pos));
+        fi = frslts.diffuseNorm2(pos);
+        C.copy(frslts.M(pos));
+        Ci.copy(frslts.Mi(pos));
         if (fi != 0) {
             C.addAY(-f / fi, Ci);
         }

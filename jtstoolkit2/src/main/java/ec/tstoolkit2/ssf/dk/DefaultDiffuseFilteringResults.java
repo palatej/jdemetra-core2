@@ -67,7 +67,7 @@ public class DefaultDiffuseFilteringResults extends DefaultFilteringResults impl
     public void save(int t, DiffusePredictionError pe) {
         super.save(t, pe);
         fi.save(t, pe.getDiffuseNorm2());
-        Ci.save(t, pe.Ci());
+        Ci.save(t, pe.Mi());
     }
 
     @Override
@@ -87,14 +87,17 @@ public class DefaultDiffuseFilteringResults extends DefaultFilteringResults impl
     }
 
 
-    public double diffuseNorm(int pos) {
+    @Override
+    public double diffuseNorm2(int pos) {
         return fi.get(pos);
     }
 
-    public DataBlock ci(int pos) {
+    @Override
+    public DataBlock Mi(int pos) {
         return Ci.datablock(pos);
     }
  
+    @Override
     public SubMatrix Pi(int pos) {
         return Pi.subMatrix(pos);
     }

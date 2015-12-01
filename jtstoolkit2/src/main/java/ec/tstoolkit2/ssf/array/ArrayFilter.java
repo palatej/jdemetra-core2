@@ -126,13 +126,13 @@ public class ArrayFilter {
     private void postArray() {
         double e=A.get(0,0);
         pe_.setStandardDeviation(e);
-        pe_.C().copy(K());
-        pe_.C().mul(e);
+        pe_.M().copy(K());
+        pe_.M().mul(e);
     }
 
     private void nextState() {
         dyn_.TX(pos_, state_.a);
-        state_.a.addAY(pe_.get() / pe_.getVariance(), pe_.C());
+        state_.a.addAY(pe_.get() / pe_.getVariance(), pe_.M());
     }
 
     private DataBlock K() {

@@ -32,7 +32,7 @@ public class PredictionError {
     /**
      * C = P Z'
      */
-    private final DataBlock C;
+    private final DataBlock M;
     
 
     /**
@@ -40,7 +40,7 @@ public class PredictionError {
      * @param dim
      */
     public PredictionError(final int dim) {
-        C = new DataBlock(dim);
+        M = new DataBlock(dim);
     }
 
     /**
@@ -71,8 +71,8 @@ public class PredictionError {
      * 
      * @return 
      */
-     public DataBlock C() {
-        return C;
+     public DataBlock M() {
+        return M;
     }
 
     /**

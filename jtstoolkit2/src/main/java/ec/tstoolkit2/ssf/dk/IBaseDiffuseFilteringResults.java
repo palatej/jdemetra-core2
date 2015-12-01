@@ -26,24 +26,24 @@ import ec.tstoolkit2.ssf.univariate.IFilteringResults;
  *
  * @author Jean Palate
  */
-public interface IDiffuseFilteringResults extends IBaseDiffuseFilteringResults{
+public interface IBaseDiffuseFilteringResults extends IFilteringResults{
+    /**
+     *
+     * @param pos
+     */
+    void close(int pos);
 
-    /**
-     *
-     * @param t
-     * @param pe 
-     */
-    void save(int t, DiffusePredictionError pe);
     
-    /**
-     *
-     * @param t
-     * @param state 
-     */
-    void save(int t, DiffuseState state);
-    
-    default SubMatrix Pi(int pos) {
+    default double diffuseNorm2(int pos) {
+        return Double.NaN;
+    }
+
+    default DataBlock Mi(int pos) {
         return null;
     }
+ 
     
+    default int getEndDiffusePosition(){
+        return -1;
+    };
 }
