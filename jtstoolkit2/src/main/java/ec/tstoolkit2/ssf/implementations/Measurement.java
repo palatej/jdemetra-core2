@@ -59,6 +59,10 @@ public class Measurement {
         return new Proxy(m);
     }
 
+    public static ISsfMeasurement cyclical(final int period) {
+        return new CyclicalMeasurement(period);
+    }
+
     private static class Proxy implements ISsfMeasurement {
 
         private final ISsfMeasurements m_;
@@ -341,4 +345,97 @@ public class Measurement {
         }
 
     }
+    
+        static class CyclicalMeasurement implements ISsfMeasurement {
+
+        private final int period;
+
+        public CyclicalMeasurement(int period) {
+            this.period = period;
+        }
+
+        @Override
+        public boolean isTimeInvariant() {
+            return false;
+        }
+
+        @Override
+        public void Z(int pos, DataBlock z) {
+            int spos = pos % period;
+            if (spos == period - 1) {
+                z.set(-1);
+            } else {
+                z.set(spos, 1);
+            }
+        }
+
+        @Override
+        public boolean hasErrors() {
+            return false;
+        }
+
+        @Override
+        public boolean hasError(int pos) {
+            return false;
+        }
+
+        @Override
+        public double errorVariance(int pos) {
+            return 0;
+        }
+
+        @Override
+        public double ZX(int pos, DataBlock x) {
+            int spos = pos % period;
+            if (spos == period - 1) {
+                return -x.sum();
+            } else {
+                return x.get(spos);
+            }
+        }
+
+        @Override
+        public void ZM(int pos, SubMatrix m, DataBlock x) {
+            int spos = pos % period;
+            if (spos == period - 1) {
+                for (int i = 0; i < x.getLength(); ++i) {
+                    x.set(i, -m.column(i).sum());
+                }
+            } else {
+                x.copy(m.row(spos));
+            }
+        }
+
+        @Override
+        public double ZVZ(int pos, SubMatrix vm) {
+            int spos = pos % period;
+            if (spos == period - 1) {
+                return vm.sum();
+            } else {
+                return vm.get(spos, spos);
+            }
+        }
+
+        @Override
+        public void VpZdZ(int pos, SubMatrix vm, double d) {
+            int spos = pos % period;
+            if (spos == period - 1) {
+                vm.add(d);
+            } else {
+                vm.add(spos, spos, d);
+            }
+        }
+
+        @Override
+        public void XpZd(int pos, DataBlock x, double d) {
+            int spos = pos % period;
+            if (spos == period - 1) {
+                x.add(-d);
+            } else {
+                x.add(spos, d);
+            }
+        }
+
+    }
+
 }

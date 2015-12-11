@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.implementations.structural;
 
@@ -174,33 +174,34 @@ public class SsfBsm extends Ssf {
      * @return
      */
     private static synchronized Matrix tsVar(int freq) {
-        if (freq == 12) {
-            if (g_VTS12 == null) {
-                g_VTS12 = tsvar(12);
-            }
-            return g_VTS12.clone();
-        } else if (freq == 4) {
-            if (g_VTS4 == null) {
-                g_VTS4 = tsvar(4);
-            }
-            return g_VTS4.clone();
-        } else if (freq == 2) {
-            if (g_VTS2 == null) {
-                g_VTS2 = tsvar(2);
-            }
-            return g_VTS2.clone();
-        } else if (freq == 3) {
-            if (g_VTS3 == null) {
-                g_VTS3 = tsvar(3);
-            }
-            return g_VTS3.clone();
-        } else if (freq == 6) {
-            if (g_VTS6 == null) {
-                g_VTS6 = tsvar(6);
-            }
-            return g_VTS6.clone();
-        } else {
-            return tsvar(freq);
+        switch (freq) {
+            case 12:
+                if (g_VTS12 == null) {
+                    g_VTS12 = tsvar(12);
+                }
+                return g_VTS12.clone();
+            case 4:
+                if (g_VTS4 == null) {
+                    g_VTS4 = tsvar(4);
+                }
+                return g_VTS4.clone();
+            case 2:
+                if (g_VTS2 == null) {
+                    g_VTS2 = tsvar(2);
+                }
+                return g_VTS2.clone();
+            case 3:
+                if (g_VTS3 == null) {
+                    g_VTS3 = tsvar(3);
+                }
+                return g_VTS3.clone();
+            case 6:
+                if (g_VTS6 == null) {
+                    g_VTS6 = tsvar(6);
+                }
+                return g_VTS6.clone();
+            default:
+                return tsvar(freq);
         }
     }
 
@@ -210,16 +211,24 @@ public class SsfBsm extends Ssf {
         } else {
             int n = freq - 1;
             Matrix Q = Matrix.square(n);
-            // Dummy
-            if (seasModel == SeasonalModel.Dummy) {
-                Q.set(n - 1, n - 1, 1);
-            } else if (seasModel == SeasonalModel.Crude) {
-                Q.set(1);
-                //Q.set(0, 0, freq * var);
-            } else if (seasModel == SeasonalModel.HarrisonStevens) {
-                double v = 1.0 / freq;
-                Q.set(-v);
-                Q.diagonal().add(1);
+            if (null != seasModel) // Dummy
+            {
+                switch (seasModel) {
+                    case Dummy:
+                        Q.set(n - 1, n - 1, 1);
+                        break;
+                    case Crude:
+                        Q.set(1);
+                        //Q.set(0, 0, freq * var);
+                        break;
+                    case HarrisonStevens:
+                        double v = 1.0 / freq;
+                        Q.set(-v);
+                        Q.diagonal().add(1);
+                        break;
+                    default:
+                        break;
+                }
             }
             return Q;
         }
