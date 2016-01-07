@@ -111,7 +111,7 @@ public class DkToolkit {
 
             DiffusePredictionErrorDecomposition pe = new DiffusePredictionErrorDecomposition(res);
             if (res) {
-                pe.prepare(data.getCount());
+                pe.prepare(ssf, data.getCount());
             }
             DurbinKoopmanInitializer initializer = new DurbinKoopmanInitializer(pe);
             OrdinaryFilter filter = new OrdinaryFilter(initializer);
@@ -134,7 +134,7 @@ public class DkToolkit {
 
             DiffusePredictionErrorDecomposition pe = new DiffusePredictionErrorDecomposition(res);
             if (res) {
-                pe.prepare(data.getCount());
+                pe.prepare(ssf, data.getCount());
             }
             DiffuseSquareRootInitializer initializer = new DiffuseSquareRootInitializer(pe);
             OrdinaryFilter filter = new OrdinaryFilter(initializer);

@@ -16,173 +16,96 @@
  */
 package ec.tstoolkit2.ssf.akf;
 
-import ec.tstoolkit.data.DataBlock;
-import ec.tstoolkit.data.LogSign;
 import ec.tstoolkit.design.Development;
-import ec.tstoolkit.eco.Determinant;
-import ec.tstoolkit.maths.matrices.LowerTriangularMatrix;
-import ec.tstoolkit.maths.matrices.Matrix;
-import ec.tstoolkit.maths.matrices.SubMatrix;
-import ec.tstoolkit2.ssf.IPredictionErrorDecomposition;
-import ec.tstoolkit2.ssf.State;
 import ec.tstoolkit2.ssf.StateInfo;
-import ec.tstoolkit2.ssf.multivariate.IMultivariateSsf;
-import ec.tstoolkit2.ssf.multivariate.IMultivariateSsfData;
 import ec.tstoolkit2.ssf.univariate.ISsf;
-import ec.tstoolkit2.ssf.univariate.ISsfData;
+import ec.tstoolkit2.ssf.univariate.PredictionErrorDecomposition;
 
 /**
  *
  * @author Jean Palate
  */
 @Development(status = Development.Status.Alpha)
-public class AugmentedPredictionErrorDecomposition implements IPredictionErrorDecomposition, IAugmentedFilteringResults {
+public class AugmentedPredictionErrorDecomposition extends PredictionErrorDecomposition implements IAugmentedFilteringResults {
 
-    private final Determinant det = new Determinant();
-    // Q is the cholesky factor of the usual "Q matrix" of De Jong.
-    // Q(dj) = |S   -s|
-    //         |-s'  q|
-    // Q = |a 0|
-    //     |b c|
-    // so that we have:
-    // q = b * b' + c * c
-    // S = a * a' 
-    // -s = a * b'
-    // s' * S^-1 * s = b * a' * S^-1 * a * b' = b * b'
-    // q - s' * S^-1 * s = c * c
-    private Matrix Q;
-    private int n, nd;
+    private int nd, n, ncollapsed;
+    private final QAugmentation Q = new QAugmentation();
 
-    /**
-     *
-     */
-    public AugmentedPredictionErrorDecomposition() {
+    public AugmentedPredictionErrorDecomposition(boolean res) {
+        super(res);
     }
 
-    /**
-     *
-     */
+    @Override
+    public void prepare(final ISsf ssf, final int n) {
+        super.prepare(ssf, n);
+        nd = ssf.getDynamics().getNonStationaryDim();
+        Q.prepare(nd, 1);
+    }
+
+    @Override
+    public void close(int pos) {
+    }
+
     @Override
     public void clear() {
-        det.clear();
-        Q=null;
-        n=0;
-        nd=0;
+        super.clear();
+        Q.clear();
+        n = 0;
+        res = null;
     }
 
-    /**
-     *
-     */
     @Override
-    public void close() {
-    }
-    // TODO Update with Java 8
-    private static boolean isPositive(DataBlock q) {
-        for (int i = 0; i < q.getLength(); ++i) {
-            if (q.get(i) < State.ZERO) {
-                return false;
-            }
+    public void save(int t, AugmentedPredictionError pe) {
+        if (t + 1 > n) {
+            n = t + 1;
         }
-        return true;
+        if (pe == null || pe.isMissing()) {
+            return;
+        }
+        if (pe.isDiffuse()) {
+            Q.update(pe);
+        } else {
+            super.save(t, pe);
+        }
+    }
+
+    @Override
+    public void save(int t, AugmentedState state) {
     }
 
     @Override
     public boolean canCollapse() {
-        return !isPositive(Q.diagonal().drop(0, 1));
+        return Q.canCollapse();
     }
 
     @Override
-    public boolean collapse(AugmentedState state) {
+    public boolean collapse(int pos, AugmentedState state) {
         if (state.getInfo() != StateInfo.Forecast) {
             return false;
+        } else {
+            if (Q.collapse(state)){
+                ncollapsed=pos;
+                return true;
+            }else
+                return false;
         }
-        if (!isPositive(Q.diagonal().drop(0, 1))) {
-            return false;
-        }
-
-        // update the state vector
-        Matrix A = new Matrix(state.B());
-        int d = A.getColumnsCount();
-        Matrix S = new Matrix(a());
-        LowerTriangularMatrix.rsolve(S, A.subMatrix().transpose());
-        DataBlock D = b().deepClone();
-        LowerTriangularMatrix.lsolve(S, D);
-        for (int i = 0; i < d; ++i) {
-            DataBlock col = A.column(i);
-            state.a().addAY(-Q.get(d, i), col);
-            state.P().addXaXt(1, col);
-        }
-        state.dropAllConstraints();
-        return true;
     }
-
-    private SubMatrix a() {
-        return Q.subMatrix(0, nd, 0, nd);
-    }
-
-    private DataBlock b() {
-        return Q.row(nd).range(0, nd);
-    }
-
-    private double c() {
-        return Q.get(nd, nd);
-    }
-
-    /**
-     *
-     * @param nd
-     */
-    private void prepare(final int nd) {
-        det.clear();
-        this.n = 0;
-        this.nd = nd;
-        Q = new Matrix(nd + 1, nd + 2);
+    
+    @Override
+    public int getCollapsingPosition(){
+        return ncollapsed;
     }
 
     @Override
-    public void save(final int t, final AugmentedPredictionError pe) {
-        if (pe.isMissing()) {
-            return;
-        }
-        ++n;
-        double v = pe.getVariance();
-        double e = pe.get();
-        det.add(v);
-        DataBlock col = Q.column(nd + 1);
-        double se = Math.sqrt(v);
-        col.range(0, nd).setAY(1 / se, pe.E());
-        col.set(nd, e / se);
-        ec.tstoolkit.maths.matrices.ElementaryTransformations.fastGivensTriangularize(Q.subMatrix());
-    }
-
-    public Matrix getFinalQ() {
+    public QAugmentation getAugmentation(){
         return Q;
     }
 
     @Override
     public AkfDiffuseLikelihood likelihood() {
-        AkfDiffuseLikelihood ll = new AkfDiffuseLikelihood();
-        double cc = c();
-        cc *= cc;
-        LogSign dsl = a().diagonal().sumLog();
-        double dcorr = 2 * dsl.value;
-        ll.set(cc, det.getLogDeterminant(), dcorr, n, nd);
+        AkfDiffuseLikelihood ll = Q.likelihood();
+        ll.add(super.likelihood());
         return ll;
-    }
-
-    @Override
-    public void open(ISsf ssf, ISsfData data) {
-        prepare(ssf.getDynamics().getNonStationaryDim());
-    }
-
-//    @Override
-    public void open(IMultivariateSsf ssf, IMultivariateSsfData data) {
-        prepare(ssf.getDynamics().getNonStationaryDim());
-    }
-
-    @Override
-    public void save(int t, AugmentedState state) {
-        // nothing to do. We are just interested by the prediction error...
     }
 
 }

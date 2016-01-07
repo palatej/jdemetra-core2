@@ -105,9 +105,13 @@ public class DefaultDiffuseFilteringResults extends DefaultFilteringResults impl
     @Override
     public void clear() {
         super.clear();
+        Ci.clear();
+        fi.clear();
+        Pi.clear();
         enddiffuse = 0;
     }
 
+    @Override
     public int getEndDiffusePosition() {
         return enddiffuse;
     }

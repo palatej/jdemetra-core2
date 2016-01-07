@@ -75,6 +75,18 @@ public class MatrixResults {
 
     /**
      *
+     * @param nrows
+     * @param ncols
+     * @param start
+     * @param end
+     */
+    public void prepare(final int nrows, final int ncols, final int start, final int end) {
+        clear();
+        start_=start;
+        data_ = new MatrixStorage(nrows, ncols, end - start);
+    }
+    /**
+     *
      * @param t
      * @return
      */
@@ -111,6 +123,10 @@ public class MatrixResults {
         int st = t - start_;
         if (st < 0) {
             return;
+        }
+        int capacity=data_.getCapacity();
+        if (capacity<=st){
+            data_.resize(capacity<<1);
         }
         data_.save(st, P);
     }

@@ -249,7 +249,7 @@ public class DiffuseSmoother {
     }
 
     public void setCalcVariances(boolean b) {
-        calcvar = false;
+        calcvar = b;
     }
 
     public boolean isCalcVariances() {

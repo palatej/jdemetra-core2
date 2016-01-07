@@ -27,6 +27,7 @@ import ec.tstoolkit2.ssf.State;
 import ec.tstoolkit2.ssf.StateInfo;
 import ec.tstoolkit2.ssf.multivariate.IMultivariateSsf;
 import ec.tstoolkit2.ssf.multivariate.IMultivariateSsfData;
+import ec.tstoolkit2.ssf.univariate.ISsf;
 
 /**
  *

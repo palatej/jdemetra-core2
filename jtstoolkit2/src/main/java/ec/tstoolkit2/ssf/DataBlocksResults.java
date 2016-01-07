@@ -22,7 +22,6 @@ import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockIterator;
 import ec.tstoolkit.data.DataBlockStorage;
 import ec.tstoolkit.maths.matrices.SubMatrix;
-import ec.tstoolkit.utilities.IntList;
 
 /**
  *

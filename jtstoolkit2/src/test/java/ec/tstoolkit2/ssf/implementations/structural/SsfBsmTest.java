@@ -235,7 +235,8 @@ public class SsfBsmTest {
         //DurbinKoopmanInitializer dk = new DurbinKoopmanInitializer();
         AugmentedFilter akf = new AugmentedFilter(true);
         Ssf ssf = SsfBsm.create(model);
-        AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+        AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+        pe.prepare(ssf, data.length);
         akf.process(ssf, new SsfData(data), pe);
         AugmentedState state = akf.getState();
         assertTrue(state.P().minus(P).nrm2() < 1e-9);
@@ -249,7 +250,7 @@ public class SsfBsmTest {
         for (int i = 0; i < N; ++i) {
             AugmentedFilter akf = new AugmentedFilter(true);
             Ssf ssf = SsfBsm.create(model);
-            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
             akf.process(ssf, new SsfData(data), pe);
         }
         long t1 = System.currentTimeMillis();

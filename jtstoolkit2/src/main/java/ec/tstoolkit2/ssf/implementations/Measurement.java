@@ -315,6 +315,8 @@ public class Measurement {
 
         @Override
         public void VpZdZ(int pos, SubMatrix V, double d) {
+            if (d == 0)
+                return;
             int n = mpos.length;
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < n; ++j) {
@@ -325,6 +327,8 @@ public class Measurement {
 
         @Override
         public void XpZd(int pos, DataBlock x, double d) {
+            if (d == 0)
+                return;
             int n = mpos.length;
             for (int i = 0; i < n; ++i) {
                 x.add(mpos[i], d);
@@ -418,6 +422,8 @@ public class Measurement {
 
         @Override
         public void VpZdZ(int pos, SubMatrix vm, double d) {
+            if (d == 0)
+                return;
             int spos = pos % period;
             if (spos == period - 1) {
                 vm.add(d);
@@ -428,6 +434,8 @@ public class Measurement {
 
         @Override
         public void XpZd(int pos, DataBlock x, double d) {
+            if (d == 0)
+                return;
             int spos = pos % period;
             if (spos == period - 1) {
                 x.add(-d);

@@ -18,7 +18,9 @@
  */
 package ec.tstoolkit2.ssf.univariate;
 
+import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.IReadDataBlock;
+import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.IStateResults;
 
 /**
@@ -26,5 +28,11 @@ import ec.tstoolkit2.ssf.IStateResults;
  * @author PCUser
  */
 public interface ISmoothingResults extends IStateResults{
-    // to be extended
+    default DataBlock a(int pos) {
+        return null;
+    }
+
+    default SubMatrix P(int pos) {
+        return null;
+    }
 }

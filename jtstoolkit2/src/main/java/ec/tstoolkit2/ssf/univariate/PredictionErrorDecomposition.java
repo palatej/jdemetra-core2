@@ -56,8 +56,8 @@ public class PredictionErrorDecomposition implements
         return bres ? res.getData() : null;
     }
 
-    public void prepare(final int n) {
-        cumulator.clear();
+    public void prepare(final ISsf ssf, final int n) {
+        clear();
         if (bres){
             res=DataBlock.create(n);
             res.set(Double.NaN);

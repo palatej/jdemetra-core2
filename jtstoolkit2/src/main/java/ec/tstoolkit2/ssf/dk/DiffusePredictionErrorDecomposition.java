@@ -60,12 +60,11 @@ public class DiffusePredictionErrorDecomposition extends PredictionErrorDecompos
 
     @Override
     public void clear() {
-        cumulator.clear();
+        super.clear();
         ddet.clear();
         nd = 0;
         n = 0;
         enddiffuse = 0;
-        res = null;
     }
 
     @Override

@@ -19,6 +19,7 @@
 package ec.tstoolkit2.ssf.akf;
 
 import ec.tstoolkit.eco.ILikelihood;
+import ec.tstoolkit2.ssf.univariate.DefaultSmoothingResults;
 import ec.tstoolkit2.ssf.univariate.ILikelihoodComputer;
 import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.ISsfData;
@@ -36,12 +37,35 @@ public class AkfToolkit {
         return collapsing ? new LLComputer2() : new LLComputer1();
     }
 
+    public static DefaultAugmentedFilteringResults filter(ISsf ssf, ISsfData data, boolean all) {
+        DefaultAugmentedFilteringResults frslts = all
+                ? DefaultAugmentedFilteringResults.full() : DefaultAugmentedFilteringResults.light();
+        frslts.prepare(ssf, 0, data.getCount());
+        AugmentedFilterInitializer initializer = new AugmentedFilterInitializer(frslts);
+        OrdinaryFilter filter = new OrdinaryFilter(initializer);
+        filter.process(ssf, data, frslts);
+        return frslts;
+    }
+    
+    public static DefaultSmoothingResults smooth(ISsf ssf, ISsfData data, boolean all) {
+        AugmentedSmoother smoother = new AugmentedSmoother();
+        smoother.setCalcVariances(all);
+        DefaultSmoothingResults sresults = all ? DefaultSmoothingResults.full()
+                : DefaultSmoothingResults.light();
+        sresults.prepare(ssf, 0, data.getCount());
+        if (smoother.process(ssf, data, sresults)) {
+            return sresults;
+        } else {
+            return null;
+        }
+    }
     private static class LLComputer1 implements ILikelihoodComputer {
 
         @Override
         public ILikelihood compute(ISsf ssf, ISsfData data) {
             AugmentedFilter akf = new AugmentedFilter();
-            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+            pe.prepare(ssf, data.getCount());
             if (!akf.process(ssf, data, pe)) {
                 return null;
             }
@@ -54,14 +78,12 @@ public class AkfToolkit {
 
         @Override
         public ILikelihood compute(ISsf ssf, ISsfData data) {
-            AugmentedPredictionErrorDecomposition ipe = new AugmentedPredictionErrorDecomposition();
-            AugmentedFilterInitializer initializer = new AugmentedFilterInitializer(ipe);
+            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+            pe.prepare(ssf, data.getCount());
+            AugmentedFilterInitializer initializer = new AugmentedFilterInitializer(pe);
             OrdinaryFilter filter = new OrdinaryFilter(initializer);
-            PredictionErrorDecomposition pe = new PredictionErrorDecomposition(false);
             filter.process(ssf, data, pe);
-            AkfDiffuseLikelihood ll = ipe.likelihood();
-            ll.add(pe.likelihood());
-            return ll;
+            return pe.likelihood();
         }
 
     }

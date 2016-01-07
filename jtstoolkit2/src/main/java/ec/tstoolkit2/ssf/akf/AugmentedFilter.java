@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.akf;
 
@@ -31,7 +31,7 @@ import ec.tstoolkit2.ssf.univariate.ISsfData;
 import ec.tstoolkit2.ssf.univariate.ISsfMeasurement;
 
 /**
- * 
+ *
  * @author Jean Palate
  */
 public class AugmentedFilter {
@@ -112,14 +112,14 @@ public class AugmentedFilter {
         double v = pe.getVariance(), e = pe.get();
         // P = P - (M)* F^-1 *(M)' --> Symmetric
         // PZ'(LL')^-1 ZP' =PZ'L'^-1*L^-1*ZP'
-        // A = a + (M)* F^-1 * v
+        // a = a + (M)* F^-1 * v
         state.a().addAY(e / v, pe.M());
         DataBlockIterator acols = state.B().columns();
         DataBlock acol = acols.getData();
         do {
             acol.addAY(pe.E().get(acols.getPosition()) / v, pe.M());
         } while (acols.next());
-        update(state.P(), v, pe.M());//, state_.K.column(i));
+        update(state.P(), v, pe.M());
     }
 
     /**
@@ -167,21 +167,28 @@ public class AugmentedFilter {
         if (!initState()) {
             return false;
         }
-        rslts.open(ssf, data);
+        pred();
         while (pos < end) {
-            pred();
+            if (rslts != null) {
+                rslts.save(pos, state);
+            }
             if (collapse(rslts)) {
                 break;
             }
             if (error()) {
-                rslts.save(pos, pe);
+                if (rslts != null) {
+                    rslts.save(pos, pe);
+                }
                 update();
             } else {
-                state.setInfo(StateInfo.Concurrent);
+                this.state.setInfo(StateInfo.Concurrent);
             }
+            if (rslts != null) {
+                rslts.save(pos, state);
+            }
+            pred();
             ++pos;
         }
-        rslts.close();
         return true;
     }
 
@@ -195,8 +202,9 @@ public class AugmentedFilter {
             return false;
         }
         // update the state vector
-        if (! decomp.collapse(state))
+        if (!decomp.collapse(pos, state)) {
             return false;
+        }
         collapsingPos = pos;
         return true;
     }

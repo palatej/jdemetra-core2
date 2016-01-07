@@ -17,7 +17,6 @@
 package ec.tstoolkit2.ssf.univariate;
 
 import ec.tstoolkit.data.DataBlock;
-import ec.tstoolkit.data.IReadDataBlock;
 import ec.tstoolkit.design.Development;
 import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.IStateResults;

@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.akf;
 
@@ -81,12 +81,12 @@ public class AugmentedKalmanFilterTest {
     public AugmentedKalmanFilterTest() {
     }
 
-
     @Test
     public void testAkf() {
         AugmentedFilter akf = new AugmentedFilter(true);
         SsfArima ssf = SsfArima.create(model);
-        AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+        AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+        pe.prepare(ssf, data.length);
         akf.process(ssf, new SsfData(data), pe);
         AugmentedState state = akf.getState();
         assertTrue(state.P().minus(P).nrm2() < 1e-9);
@@ -124,7 +124,8 @@ public class AugmentedKalmanFilterTest {
         for (int i = 0; i < N; ++i) {
             AugmentedFilter akf = new AugmentedFilter(true);
             SsfArima ssf = SsfArima.create(model);
-            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+            pe.prepare(ssf, data.length);
             akf.process(ssf, new SsfData(data), pe);
         }
         long t1 = System.currentTimeMillis();

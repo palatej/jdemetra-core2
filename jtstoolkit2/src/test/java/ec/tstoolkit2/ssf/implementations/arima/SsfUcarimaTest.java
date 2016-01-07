@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.implementations.arima;
 
@@ -203,7 +203,8 @@ public class SsfUcarimaTest {
     @Test
     public void testAKF() {
         AugmentedFilter akf = new AugmentedFilter(true);
-        AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+        AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+        pe.prepare(ssf, ssfData.getCount());
         akf.process(ssf, ssfData, pe);
         assertTrue(akf.getState().P().minus(P).nrm2() < 1e-6);
         assertTrue(akf.getState().a().distance(A) < 1e-6);
@@ -215,7 +216,8 @@ public class SsfUcarimaTest {
         long t0 = System.currentTimeMillis();
         for (int i = 0; i < N; ++i) {
             AugmentedFilter akf = new AugmentedFilter(true);
-            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition();
+            AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
+            pe.prepare(ssf, ssfData.getCount());
             akf.process(ssf, ssfData, pe);
         }
         long t1 = System.currentTimeMillis();

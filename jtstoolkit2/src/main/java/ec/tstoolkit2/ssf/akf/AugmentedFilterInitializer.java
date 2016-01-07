@@ -42,8 +42,6 @@ public class AugmentedFilterInitializer implements OrdinaryFilter.Initializer{
         if (! ok)
             return -1;
         AugmentedState astate = akf.getState();
-        if (! results.collapse(astate))
-            return -1;
         state.copy(astate);
         return akf.getCollapsingPosition();
     }

@@ -94,7 +94,8 @@ public class DiffuseSquareRootSmoother {
         state.a().copy(frslts.a(pos));
         if (calcvar) {
             state.P().subMatrix().copy(frslts.P(pos));
-            state.B().copy(frslts.B(pos));
+            SubMatrix B = frslts.B(pos);
+            state.restoreB(B);
         }
     }
 
@@ -252,7 +253,7 @@ public class DiffuseSquareRootSmoother {
     }
 
     public void setCalcVariances(boolean b) {
-        calcvar = false;
+        calcvar = b;
     }
 
     public boolean isCalcVariances() {

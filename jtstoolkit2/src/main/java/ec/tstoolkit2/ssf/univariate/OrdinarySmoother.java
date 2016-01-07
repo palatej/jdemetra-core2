@@ -95,6 +95,18 @@ public class OrdinarySmoother {
         return true;
     }
 
+    public boolean resume(final int start) {
+        stop = start;
+        while (pos >= stop) {
+            loadInfo();
+            if (iterate()) {
+                srslts.save(pos, state);
+            }
+            pos--;
+        }
+        return true;
+    }
+
     public ISmoothingResults getResults() {
         return srslts;
     }
@@ -234,7 +246,7 @@ public class OrdinarySmoother {
     }
 
     public void setCalcVariances(boolean b) {
-        calcvar = false;
+        calcvar = b;
     }
 
     public boolean isCalcVariances() {

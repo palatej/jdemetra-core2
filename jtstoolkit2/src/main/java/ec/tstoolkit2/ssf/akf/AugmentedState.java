@@ -68,7 +68,7 @@ public class AugmentedState extends State{
     
     public void restoreB(SubMatrix b){
         int n=b.getColumnsCount(), m=B.getColumnsCount();
-        ndropped=-n;
+        ndropped=m-n;
         B().copy(b);
     }
     

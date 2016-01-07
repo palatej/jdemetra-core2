@@ -40,7 +40,7 @@ import org.junit.Ignore;
  */
 public class DiffuseSmootherTest {
 
-    static final int N = 50;
+    static final int N = 0;
     static final UcarimaModel ucm;
     static final SsfData data;
     static final ec.tstoolkit.ssf.SsfData odata;
@@ -79,13 +79,14 @@ public class DiffuseSmootherTest {
 
 
         SsfUcarima ssf = SsfUcarima.create(ucm);
-        DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, false);
+        DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, true);
 
-        DefaultSmoothingResults srslts2 = DkToolkit.sqrtSmooth(ssf, data, false);
+        DefaultSmoothingResults srslts2 = DkToolkit.sqrtSmooth(ssf, data, true);
        // old implementation
         ec.tstoolkit.ssf.Smoother osmoother = new ec.tstoolkit.ssf.Smoother();
         ec.tstoolkit.ssf.SmoothingResults osrslts = new ec.tstoolkit.ssf.SmoothingResults();
         osmoother.setSsf(new ec.tstoolkit.ssf.ucarima.SsfUcarima(ucm));
+        osmoother.setCalcVar(true);
         osmoother.process(odata, osrslts);
 //        System.out.println(new DataBlock(osrslts.component(0)));
 //        System.out.println(new DataBlock(srslts.getComponent(0)));
@@ -106,6 +107,7 @@ public class DiffuseSmootherTest {
             DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, false);
         }
         long t1 = System.currentTimeMillis();
+        System.out.println("DK smoother");
         System.out.println(t1 - t0);
         // old implementation
 
@@ -117,6 +119,7 @@ public class DiffuseSmootherTest {
             osmoother.process(odata, osrslts);
         }
         t1 = System.currentTimeMillis();
+        System.out.println("Old smoother");
         System.out.println(t1 - t0);
         t0 = System.currentTimeMillis();
         for (int i = 0; i < 10000; ++i) {
@@ -124,6 +127,7 @@ public class DiffuseSmootherTest {
             DefaultSmoothingResults srslts = DkToolkit.sqrtSmooth(ssf, data, false);
         }
         t1 = System.currentTimeMillis();
+        System.out.println("SQRT smoother");
         System.out.println(t1 - t0);
     }
 }

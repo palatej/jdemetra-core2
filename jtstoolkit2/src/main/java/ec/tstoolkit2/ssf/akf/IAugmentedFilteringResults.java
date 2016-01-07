@@ -14,10 +14,13 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.akf;
 
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.maths.matrices.SubMatrix;
+import ec.tstoolkit2.ssf.univariate.IFilteringResults;
 import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.ISsfData;
 
@@ -25,22 +28,13 @@ import ec.tstoolkit2.ssf.univariate.ISsfData;
  *
  * @author Jean Palate
  */
-public interface IAugmentedFilteringResults {
-    /**
-     *
-     */
-    void clear();
+public interface IAugmentedFilteringResults extends IFilteringResults {
 
     /**
      *
+     * @param pos
      */
-    void close();
-    /**
-     *
-     * @param ssf
-     * @param data
-     */
-    void open(ISsf ssf, ISsfData data);
+    void close(int pos);
 
     /**
      *
@@ -48,15 +42,27 @@ public interface IAugmentedFilteringResults {
      * @param pe
      */
     void save(int t, AugmentedPredictionError pe);
-    
+
     /**
      *
      * @param t
      * @param state
      */
     void save(int t, AugmentedState state);
-    
+
+    default SubMatrix B(int pos) {
+        return null;
+    }
+
+    default DataBlock E(int pos) {
+        return null;
+    }
+
     boolean canCollapse();
-    
-    boolean collapse(AugmentedState state);
+
+    boolean collapse(int pos, AugmentedState state);
+
+    int getCollapsingPosition();
+
+    QAugmentation getAugmentation();
 }
