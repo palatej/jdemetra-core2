@@ -137,8 +137,8 @@ public class DiffuseSmoother {
         Matrix PN0P = SymmetricMatrix.quadraticForm(N0, P);
         Matrix Pi = state.Pi();
         Matrix PN2P = SymmetricMatrix.quadraticForm(N2, Pi);
-        Matrix N1Pi = N1.times(Pi);
-        Matrix PN1Pi = P.times(N1Pi);
+        Matrix PN1 = P.times(N1);
+        Matrix PN1Pi = PN1.times(Pi);
         P.sub(PN0P);
         P.sub(PN2P);
         P.sub(PN1Pi);
@@ -211,7 +211,6 @@ public class DiffuseSmoother {
         // N1 = Z'Z/Fi + Li'*N1*Li - < Z'Kf'*Nf'*Li >
         // N2 = Z'Z * c + Li'*N2*Li - < Z'Kf'*N1'*Li >, c= Kf'*Nf*Kf-Ff/(Fi*Fi)
         // compute first N2 then N1 and finally Nf
-        double c = SymmetricMatrix.quadraticForm(N0, C) - f / (fi * fi);
 
         tvt(N0);
         tvt(N1);
@@ -231,7 +230,7 @@ public class DiffuseSmoother {
         xQi(tmp0);
         xQi(tmp1);
 
-        measurement.VpZdZ(pos, N1.subMatrix(), 1 / fi);
+        measurement.VpZdZ(pos, N1.subMatrix(), 1 / fi); //
         measurement.VpZdZ(pos, N2.subMatrix(), kn0k - f / (fi * fi));
 
         subZ(N1.rows(), tmp0);
@@ -251,7 +250,6 @@ public class DiffuseSmoother {
         do {
             dynamics.XT(pos, row);
         } while (rows.next());
-        SymmetricMatrix.reinforceSymmetry(N);
 
     }
 

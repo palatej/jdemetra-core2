@@ -217,8 +217,6 @@ public class DiffuseSquareRootSmoother {
         // N1 = Z'Z/Fi + Li'*N1*Li - < Z'Kf'*Nf'*Li >
         // N2 = Z'Z * c + Li'*N2*Li - < Z'Kf'*N1'*Li >, c= Kf'*Nf*Kf-Ff/(Fi*Fi)
         // compute first N2 then N1 and finally Nf
-        double c = SymmetricMatrix.quadraticForm(N0, C) - f / (fi * fi);
-
         tvt(N0);
         tvt(N1);
         tvt(N2);
@@ -231,9 +229,9 @@ public class DiffuseSquareRootSmoother {
         XQi(N0.rows());
         XQi(N0.columns());
         XQi(N1.rows());
-        XQi(N2.columns());
-        XQi(N2.rows());
         XQi(N1.columns());
+        XQi(N2.rows());
+        XQi(N2.columns());
         xQi(tmp0);
         xQi(tmp1);
 

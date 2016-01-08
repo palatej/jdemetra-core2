@@ -192,11 +192,10 @@ public class OrdinaryFilter {
             if (error(data)) {
                 rslts.save(pos, pe);
                 update();
-                rslts.save(pos, state);
             } else {
                 state.setInfo(StateInfo.Concurrent);
-                rslts.save(pos, state);
             }
+            rslts.save(pos, state);
             pred();
             ++pos;
         }

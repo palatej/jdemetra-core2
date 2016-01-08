@@ -55,7 +55,7 @@ public class DiffuseSmootherTest {
         decomposer.add(ssel);
         TsData x = Data.X.clone();
         int[] missing = new int[N];
-        Random rng = new Random();
+        Random rng = new Random(0);
         for (int i = 0; i < N; ++i) {
             missing[i] = rng.nextInt(x.getLength());
         }
@@ -98,7 +98,7 @@ public class DiffuseSmootherTest {
     }
 
     @Test
-    //@Ignore
+    @Ignore
     public void stressTestSmoothing() {
         int K=1000;
         long t0 = System.currentTimeMillis();
