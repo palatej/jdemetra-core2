@@ -34,7 +34,7 @@ public class DiffuseSquareRootSmoother {
     private IDiffuseSquareRootFilteringResults frslts;
 
     private double e, f, fi;
-    private DataBlock C, Ci, Rf, Ri;
+    private DataBlock C, Ci, Rf, Ri, tmp0, tmp1;
     private Matrix N0, N1, N2;
     private boolean missing, calcvar = true;
     private int pos;
@@ -75,6 +75,8 @@ public class DiffuseSquareRootSmoother {
         Ci = new DataBlock(dim);
 
         if (calcvar) {
+            tmp0 = new DataBlock(dim);
+            tmp1 = new DataBlock(dim);
             N0 = Matrix.square(dim);
             N1 = Matrix.square(dim);
             N2 = Matrix.square(dim);
@@ -86,9 +88,14 @@ public class DiffuseSquareRootSmoother {
         f = frslts.errorVariance(pos);
         fi = frslts.diffuseNorm2(pos);
         C.copy(frslts.M(pos));
-        Ci.copy(frslts.Mi(pos));
         if (fi != 0) {
-            C.addAY(-f / fi, Ci);
+            Ci.copy(frslts.Mi(pos));
+            Ci.mul(1 / fi);
+            C.addAY(-f, Ci);
+            C.mul(1 / fi);
+        } else {
+            C.mul(1 / f);
+            Ci.set(0);
         }
         missing = !DescriptiveStatistics.isFinite(e);
         state.a().copy(frslts.a(pos));
@@ -129,23 +136,48 @@ public class DiffuseSquareRootSmoother {
     }
 
     private void updateP() {
+        Matrix P = state.P();
+        Matrix PN0P = SymmetricMatrix.quadraticForm(N0, P);
+        SubMatrix B = state.B();
+        Matrix BN2B = SymmetricMatrix.quadraticForm(N2.subMatrix(), B);
+        Matrix PN2P=SymmetricMatrix.quadraticFormT(BN2B.subMatrix(), B);
+        Matrix N1B= new Matrix(N1.getRowsCount(), B.getColumnsCount());
+        N1B.subMatrix().product(N1.subMatrix(), B);
+        Matrix PN1B=P.times(N1B);
+        Matrix PN1P=Matrix.square(P.getRowsCount());
+        PN1P.subMatrix().product(PN1B.subMatrix(), B.transpose());
+        P.sub(PN0P);
+        P.sub(PN2P);
+        P.sub(PN1P);
+        P.subMatrix().sub(PN1P.subMatrix().transpose());
+        SymmetricMatrix.reinforceSymmetry(P);
+     }
 
+    /**
+     * Computes in place x = x-c/f*z
+     *
+     * @param x
+     * @param k
+     */
+    private void xQ(DataBlock x) {
+        measurement.XpZd(pos, x, -x.dot(C));
     }
 
-    private void xL(DataBlock x) {
-        // xL = x(T-KZ) = x(T-Tc/f*Z) = xT - ((xT)*c)/f * Z
-        // compute xT
-        dynamics.XT(pos, x);
-        // compute q=xT*c
-        double q = x.dot(C);
-        // remove q/f*Z
-        measurement.XpZd(pos, x, -q / f);
-    }
-
-    private void XL(DataBlockIterator X) {
+    private void XQ(DataBlockIterator X) {
         DataBlock x = X.getData();
         do {
-            xL(x);
+            xQ(x);
+        } while (X.next());
+    }
+
+    private void xQi(DataBlock x) {
+        measurement.XpZd(pos, x, -x.dot(Ci));
+    }
+
+    private void XQi(DataBlockIterator X) {
+        DataBlock x = X.getData();
+        do {
+            xQi(x);
         } while (X.next());
     }
 
@@ -153,44 +185,65 @@ public class DiffuseSquareRootSmoother {
      *
      */
     private void iterateN() {
-        if (fi == 0) {
+        if (missing || (f == 0 && fi == 0)) {
+            iterateMissingN();
+        } else if (fi == 0) {
             iterateRegularN();
+        } else {
+            iterateDiffuseN();
         }
     }
 
+    private void iterateMissingN() {
+        tvt(N0);
+        tvt(N1);
+        tvt(N2);
+       // reinforceSymmetry();
+    }
+
     private void iterateRegularN() {
-        if (!missing && f != 0) {
-            // N(t-1) = Z'(t)*Z(t)/f(t) + L'(t)*N(t)*L(t)
-            XL(N0.rows());
-            XL(N0.columns());
+        // N(t-1) = Z'(t)*Z(t)/f(t) + L'(t)*N(t)*L(t)
+        tvt(N0);
+        XQ(N0.rows());
+        XQ(N0.columns());
+        measurement.VpZdZ(pos, N0.subMatrix(), 1 / f);
+        tvt(N1);
+        XQ(N1.columns());
+        tvt(N2);
+    }
 
-            double cuc = SymmetricMatrix.quadraticForm(N0, C);
+    private void iterateDiffuseN() {
+        // Nf = Li'*Nf*Li
+        // N1 = Z'Z/Fi + Li'*N1*Li - < Z'Kf'*Nf'*Li >
+        // N2 = Z'Z * c + Li'*N2*Li - < Z'Kf'*N1'*Li >, c= Kf'*Nf*Kf-Ff/(Fi*Fi)
+        // compute first N2 then N1 and finally Nf
+        double c = SymmetricMatrix.quadraticForm(N0, C) - f / (fi * fi);
 
-            // Compute V = C'U
-            DataBlock v = new DataBlock(C.getLength());
-            v.product(N0.columns(), C);
+        tvt(N0);
+        tvt(N1);
+        tvt(N2);
 
-            DataBlockIterator columns = N0.columns();
-            DataBlock col = columns.getData();
-            DataBlockIterator rows = N0.rows();
-            DataBlock row = rows.getData();
-            int i = 0;
-            do {
-                double k = v.get(i++);
-                if (k != 0) {
-                    measurement.XpZd(pos, row, -k);
-                    measurement.XpZd(pos, col, -k);
-                }
-            } while (rows.next() && columns.next());
+        tmp0.product(C, N0.columns());
+        tmp1.product(C, N1.columns());
 
-            measurement.VpZdZ(pos, N0.subMatrix(), 1 / f);
-            SymmetricMatrix.reinforceSymmetry(N0);
-        } else {
-            //T'*N(t)*T
-            tvt(N0);
-            tvt(N1);
-            tvt(N2);
-        }
+        double kn0k = tmp0.dot(C);
+
+        XQi(N0.rows());
+        XQi(N0.columns());
+        XQi(N1.rows());
+        XQi(N2.columns());
+        XQi(N2.rows());
+        XQi(N1.columns());
+        xQi(tmp0);
+        xQi(tmp1);
+
+        measurement.VpZdZ(pos, N1.subMatrix(), 1 / fi);
+        measurement.VpZdZ(pos, N2.subMatrix(), kn0k - f / (fi * fi));
+
+        subZ(N1.rows(), tmp0);
+        subZ(N1.columns(), tmp0);
+        subZ(N2.rows(), tmp1);
+        subZ(N2.columns(), tmp1);
     }
 
     private void tvt(Matrix N) {
@@ -204,7 +257,6 @@ public class DiffuseSquareRootSmoother {
         do {
             dynamics.XT(pos, row);
         } while (rows.next());
-        SymmetricMatrix.reinforceSymmetry(N);
 
     }
 
@@ -227,7 +279,7 @@ public class DiffuseSquareRootSmoother {
         dynamics.XT(pos, Ri);
         if (!missing && f != 0) {
             // RT
-            double c = (e - Rf.dot(C)) / f;
+            double c = e / f - Rf.dot(C);;
             measurement.XpZd(pos, Rf, c);
         }
     }
@@ -238,11 +290,11 @@ public class DiffuseSquareRootSmoother {
         if (!missing && f != 0) {
             // Ri(t-1)=c*Z(t) +Ri(t)*T(t)
             // c = e/fi-(Ri(t)*T(t)*Ci(t))/fi-(Rf(t)*T(t)*Cf(t))/f
-            double ci = (e - Ri.dot(Ci) - Rf.dot(C)) / fi;
+            double ci = e / fi - Ri.dot(Ci) - Rf.dot(C);
             measurement.XpZd(pos, Ri, ci);
             // Rf(t-1)=c*Z(t)+Rf(t)*T(t)
             // c =  - Rf(t)T(t)*Ci/fi
-            double cf = -Rf.dot(Ci) / fi;
+            double cf = -Rf.dot(Ci);
             measurement.XpZd(pos, Rf, cf);
         }
     }
@@ -269,6 +321,16 @@ public class DiffuseSquareRootSmoother {
         if (calcvar) {
             N0.copy(smoother.getFinalN());
         }
+    }
+
+    private void subZ(DataBlockIterator rows, DataBlock b) {
+        DataBlock row = rows.getData();
+        do {
+            double cur = b.get(rows.getPosition());
+            if (cur != 0) {
+                measurement.XpZd(pos, row, -cur);
+            }
+        } while (rows.next());
     }
 
 }

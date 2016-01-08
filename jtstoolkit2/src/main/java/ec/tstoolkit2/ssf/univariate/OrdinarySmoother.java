@@ -190,22 +190,22 @@ public class OrdinarySmoother {
             XL(N.rows());
             XL(N.columns());
 
-            // Compute V = C'U
-            DataBlock v = new DataBlock(M.getLength());
-            v.product(N.columns(), M);
-
-            DataBlockIterator columns = N.columns();
-            DataBlock col = columns.getData();
-            DataBlockIterator rows = N.rows();
-            DataBlock row = rows.getData();
-            int i = 0;
-            do {
-                double k = v.get(i++);
-                if (k != 0) {
-                    measurement.XpZd(pos, row, -k);
-                    measurement.XpZd(pos, col, -k);
-                }
-            } while (rows.next() && columns.next());
+//            // Compute V = C'U
+//            DataBlock v = new DataBlock(M.getLength());
+//            v.product(N.columns(), M);
+//
+//            DataBlockIterator columns = N.columns();
+//            DataBlock col = columns.getData();
+//            DataBlockIterator rows = N.rows();
+//            DataBlock row = rows.getData();
+//            int i = 0;
+//            do {
+//                double k = v.get(i++);
+//                if (k != 0) {
+//                    measurement.XpZd(pos, row, -k);
+//                    measurement.XpZd(pos, col, -k);
+//                }
+//            } while (rows.next() && columns.next());
 
             measurement.VpZdZ(pos, N.subMatrix(), 1 / errVariance);
             SymmetricMatrix.reinforceSymmetry(N);

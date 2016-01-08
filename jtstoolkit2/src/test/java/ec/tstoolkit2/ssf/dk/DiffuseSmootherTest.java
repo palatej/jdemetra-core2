@@ -40,7 +40,7 @@ import org.junit.Ignore;
  */
 public class DiffuseSmootherTest {
 
-    static final int N = 0;
+    static final int N = 50;
     static final UcarimaModel ucm;
     static final SsfData data;
     static final ec.tstoolkit.ssf.SsfData odata;
@@ -88,9 +88,9 @@ public class DiffuseSmootherTest {
         osmoother.setSsf(new ec.tstoolkit.ssf.ucarima.SsfUcarima(ucm));
         osmoother.setCalcVar(true);
         osmoother.process(odata, osrslts);
-//        System.out.println(new DataBlock(osrslts.component(0)));
-//        System.out.println(new DataBlock(srslts.getComponent(0)));
-//        System.out.println(new DataBlock(srslts2.getComponent(0)));
+        System.out.println(new DataBlock(osrslts.componentVar(0)));
+        System.out.println(new DataBlock(srslts.getComponentVariance(0)));
+        System.out.println(new DataBlock(srslts2.getComponentVariance(0)));
 
         assertTrue(srslts.getComponent(0).distance(srslts2.getComponent(0)) < 1e-6);
         assertTrue(srslts.getComponent(0).distance(new DataBlock(osrslts.component(0))) < 1e-6);
@@ -98,13 +98,13 @@ public class DiffuseSmootherTest {
     }
 
     @Test
-    @Ignore
+    //@Ignore
     public void stressTestSmoothing() {
-
+        int K=1000;
         long t0 = System.currentTimeMillis();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < K; ++i) {
             SsfUcarima ssf = SsfUcarima.create(ucm);
-            DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, false);
+            DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, true);
         }
         long t1 = System.currentTimeMillis();
         System.out.println("DK smoother");
@@ -112,8 +112,9 @@ public class DiffuseSmootherTest {
         // old implementation
 
         t0 = System.currentTimeMillis();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < K; ++i) {
             ec.tstoolkit.ssf.Smoother osmoother = new ec.tstoolkit.ssf.Smoother();
+            osmoother.setCalcVar(true);
             ec.tstoolkit.ssf.SmoothingResults osrslts = new ec.tstoolkit.ssf.SmoothingResults();
             osmoother.setSsf(new ec.tstoolkit.ssf.ucarima.SsfUcarima(ucm));
             osmoother.process(odata, osrslts);
@@ -122,9 +123,9 @@ public class DiffuseSmootherTest {
         System.out.println("Old smoother");
         System.out.println(t1 - t0);
         t0 = System.currentTimeMillis();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < K; ++i) {
             SsfUcarima ssf = SsfUcarima.create(ucm);
-            DefaultSmoothingResults srslts = DkToolkit.sqrtSmooth(ssf, data, false);
+            DefaultSmoothingResults srslts = DkToolkit.sqrtSmooth(ssf, data, true);
         }
         t1 = System.currentTimeMillis();
         System.out.println("SQRT smoother");
