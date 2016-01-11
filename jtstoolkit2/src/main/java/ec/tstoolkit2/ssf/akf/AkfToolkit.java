@@ -19,6 +19,7 @@
 package ec.tstoolkit2.ssf.akf;
 
 import ec.tstoolkit.eco.ILikelihood;
+import ec.tstoolkit2.ssf.dk.IBaseDiffuseFilteringResults;
 import ec.tstoolkit2.ssf.univariate.DefaultSmoothingResults;
 import ec.tstoolkit2.ssf.univariate.ILikelihoodComputer;
 import ec.tstoolkit2.ssf.univariate.ISsf;
@@ -54,6 +55,9 @@ public class AkfToolkit {
                 : DefaultSmoothingResults.light();
         sresults.prepare(ssf, 0, data.getCount());
         if (smoother.process(ssf, data, sresults)) {
+            if (all) {
+                sresults.rescaleVariances(var(data.getCount(), smoother.getFilteringResults()));
+            }
             return sresults;
         } else {
             return null;
@@ -85,6 +89,21 @@ public class AkfToolkit {
             filter.process(ssf, data, pe);
             return pe.likelihood();
         }
-
     }
+    
+        public static double var(int n, IAugmentedFilteringResults frslts) {
+        double c = frslts.getAugmentation().c();
+        double ssq=c*c;
+        int nd=frslts.getCollapsingPosition();
+        int m = frslts.getAugmentation().getDegreesofFreedom();
+        for (int i = nd; i < n; ++i) {
+            double e = frslts.error(i);
+            if (Double.isFinite(e)) {
+                ++m;
+                ssq += e * e / frslts.errorVariance(i);
+            }
+        }
+        return ssq / m;
+    }
+
 }

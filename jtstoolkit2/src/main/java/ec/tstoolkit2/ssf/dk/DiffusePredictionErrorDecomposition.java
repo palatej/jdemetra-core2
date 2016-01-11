@@ -30,7 +30,7 @@ import ec.tstoolkit2.ssf.univariate.PredictionErrorDecomposition;
 public class DiffusePredictionErrorDecomposition extends PredictionErrorDecomposition implements IDiffuseFilteringResults, IDiffuseSquareRootFilteringResults {
 
     private final Determinant ddet = new Determinant();
-    private int nd, n, enddiffuse;
+    private int nd, enddiffuse;
 
     public DiffusePredictionErrorDecomposition(boolean res) {
         super(res);
@@ -63,15 +63,11 @@ public class DiffusePredictionErrorDecomposition extends PredictionErrorDecompos
         super.clear();
         ddet.clear();
         nd = 0;
-        n = 0;
         enddiffuse = 0;
     }
 
     @Override
     public void save(int t, DiffusePredictionError pe) {
-        if (t + 1 > n) {
-            n = t + 1;
-        }
         if (pe == null || pe.isMissing()) {
             return;
         }

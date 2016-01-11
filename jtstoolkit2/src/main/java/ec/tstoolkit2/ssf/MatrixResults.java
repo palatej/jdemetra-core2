@@ -139,4 +139,8 @@ public class MatrixResults {
         return start_;
     }
 
+    public void rescale(double factor) {
+        data_.rescale(factor);
+    }
+
 }

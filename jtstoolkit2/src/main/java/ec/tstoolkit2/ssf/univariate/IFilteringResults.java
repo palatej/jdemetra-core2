@@ -27,7 +27,6 @@ import ec.tstoolkit2.ssf.IStateResults;
  */
 @Development(status = Development.Status.Alpha)
 public interface IFilteringResults extends IStateResults{
-
    
     /**
      *
@@ -40,6 +39,7 @@ public interface IFilteringResults extends IStateResults{
      *
      */
     void clear();
+    
     
     default double error(int pos) {
         return Double.NaN;

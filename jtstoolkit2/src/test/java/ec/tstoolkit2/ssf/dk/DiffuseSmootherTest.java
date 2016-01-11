@@ -26,6 +26,7 @@ import ec.tstoolkit.ucarima.ModelDecomposer;
 import ec.tstoolkit.ucarima.SeasonalSelector;
 import ec.tstoolkit.ucarima.TrendCycleSelector;
 import ec.tstoolkit.ucarima.UcarimaModel;
+import ec.tstoolkit2.ssf.akf.AkfToolkit;
 import ec.tstoolkit2.ssf.implementations.arima.SsfUcarima;
 import ec.tstoolkit2.ssf.univariate.DefaultSmoothingResults;
 import ec.tstoolkit2.ssf.univariate.SsfData;
@@ -80,19 +81,22 @@ public class DiffuseSmootherTest {
 
         SsfUcarima ssf = SsfUcarima.create(ucm);
         DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, true);
-
         DefaultSmoothingResults srslts2 = DkToolkit.sqrtSmooth(ssf, data, true);
-       // old implementation
+        DefaultSmoothingResults srslts3 = AkfToolkit.smooth(ssf, data, true);
+
+        // old implementation
         ec.tstoolkit.ssf.Smoother osmoother = new ec.tstoolkit.ssf.Smoother();
         ec.tstoolkit.ssf.SmoothingResults osrslts = new ec.tstoolkit.ssf.SmoothingResults();
         osmoother.setSsf(new ec.tstoolkit.ssf.ucarima.SsfUcarima(ucm));
         osmoother.setCalcVar(true);
         osmoother.process(odata, osrslts);
-        System.out.println(new DataBlock(osrslts.componentVar(0)));
-        System.out.println(new DataBlock(srslts.getComponentVariance(0)));
-        System.out.println(new DataBlock(srslts2.getComponentVariance(0)));
+//        System.out.println(new DataBlock(osrslts.componentVar(0)));
+//        System.out.println(new DataBlock(srslts.getComponentVariance(0)));
+//        System.out.println(new DataBlock(srslts2.getComponentVariance(0)));
+//        System.out.println(new DataBlock(srslts3.getComponentVariance(0)));
 
         assertTrue(srslts.getComponent(0).distance(srslts2.getComponent(0)) < 1e-6);
+        assertTrue(srslts.getComponent(0).distance(srslts3.getComponent(0)) < 1e-6);
         assertTrue(srslts.getComponent(0).distance(new DataBlock(osrslts.component(0))) < 1e-6);
         assertTrue(srslts.getComponent(3).distance(new DataBlock(osrslts.component(3))) < 1e-6);
     }
@@ -100,13 +104,21 @@ public class DiffuseSmootherTest {
     @Test
     @Ignore
     public void stressTestSmoothing() {
-        int K=1000;
+        int K=5000;
         long t0 = System.currentTimeMillis();
+        for (int i = 0; i < K; ++i) {
+            SsfUcarima ssf = SsfUcarima.create(ucm);
+            DefaultSmoothingResults srslts = AkfToolkit.smooth(ssf, data, true);
+        }
+        long t1 = System.currentTimeMillis();
+        System.out.println("Akf smoother");
+        System.out.println(t1 - t0);
+        t0 = System.currentTimeMillis();
         for (int i = 0; i < K; ++i) {
             SsfUcarima ssf = SsfUcarima.create(ucm);
             DefaultSmoothingResults srslts = DkToolkit.smooth(ssf, data, true);
         }
-        long t1 = System.currentTimeMillis();
+        t1 = System.currentTimeMillis();
         System.out.println("DK smoother");
         System.out.println(t1 - t0);
         // old implementation

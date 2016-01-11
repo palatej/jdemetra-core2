@@ -28,7 +28,7 @@ import ec.tstoolkit2.ssf.univariate.PredictionErrorDecomposition;
 @Development(status = Development.Status.Alpha)
 public class AugmentedPredictionErrorDecomposition extends PredictionErrorDecomposition implements IAugmentedFilteringResults {
 
-    private int nd, n, ncollapsed;
+    private int nd, ncollapsed;
     private final QAugmentation Q = new QAugmentation();
 
     public AugmentedPredictionErrorDecomposition(boolean res) {
@@ -50,15 +50,11 @@ public class AugmentedPredictionErrorDecomposition extends PredictionErrorDecomp
     public void clear() {
         super.clear();
         Q.clear();
-        n = 0;
         res = null;
     }
 
     @Override
     public void save(int t, AugmentedPredictionError pe) {
-        if (t + 1 > n) {
-            n = t + 1;
-        }
         if (pe == null || pe.isMissing()) {
             return;
         }

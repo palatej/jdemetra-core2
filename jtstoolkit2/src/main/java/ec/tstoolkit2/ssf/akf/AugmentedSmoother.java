@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
- /*
+/*
  */
 package ec.tstoolkit2.ssf.akf;
 
@@ -27,9 +27,6 @@ import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit.maths.matrices.SymmetricMatrix;
 import ec.tstoolkit2.ssf.ISsfDynamics;
 import ec.tstoolkit2.ssf.StateInfo;
-import ec.tstoolkit2.ssf.dk.DiffuseState;
-import ec.tstoolkit2.ssf.dk.DkToolkit;
-import ec.tstoolkit2.ssf.dk.IDiffuseFilteringResults;
 import ec.tstoolkit2.ssf.univariate.ISmoothingResults;
 import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.ISsfData;
@@ -48,9 +45,9 @@ public class AugmentedSmoother {
     private ISmoothingResults srslts;
     private IAugmentedFilteringResults frslts;
 
-    private double e, f, fi;
+    private double e, f;
     private DataBlock C, E, R;
-    private Matrix N, Rd, U, V;
+    private Matrix N, Rd, U, V, RNA, S;
     private Matrix Psi;
     private DataBlock delta;
     private boolean missing, hasinfo, calcvar = true;
@@ -98,6 +95,7 @@ public class AugmentedSmoother {
         if (calcvar) {
             N = Matrix.square(dim);
             V = new Matrix(dim, nd);
+            RNA = new Matrix(dim, nd);
         }
     }
 
@@ -113,8 +111,10 @@ public class AugmentedSmoother {
             return;
         }
         state.a().copy(fa);
-        state.restoreB(frslts.B(pos));
-        state.P().subMatrix().copy(frslts.P(pos));
+        if (calcvar) {
+            state.restoreB(frslts.B(pos));
+            state.P().subMatrix().copy(frslts.P(pos));
+        }
     }
 
     private void iterate() {
@@ -137,26 +137,66 @@ public class AugmentedSmoother {
         DataBlock uc = columns.getData();
         DataBlockIterator rcolumns = Rd.columns();
         DataBlock rc = rcolumns.getData();
-        DataBlockIterator acolumns = state.B().columns();
+        DataBlockIterator acolumns = calcvar ? state.B().columns() : frslts.B(pos).columns();
         DataBlock ac = acolumns.getData();
+        DataBlockIterator prows = calcvar ? state.P().rows() : frslts.P(pos).rows();
         do {
-            uc.product(state.P().rows(), rc);
+            prows.begin();
+            uc.product(prows, rc);
             uc.add(ac);
         } while (columns.next() && rcolumns.next() && acolumns.next());
     }
 
     private void calcV() {
         // V =  PR + PNA = P(R+NA)
+
+        // RNA = R + NA
+        DataBlockIterator rnacolumns = RNA.columns();
+        DataBlock rnac = rnacolumns.getData();
+        DataBlockIterator rcolumns = Rd.columns();
+        DataBlock rc = rcolumns.getData();
+        DataBlockIterator acolumns = state.B().columns();
+        DataBlock ac = acolumns.getData();
+        do {
+            rnac.product(N.rows(), ac);
+            rnac.add(rc);
+        } while (rnacolumns.next() && rcolumns.next() && acolumns.next());
+
+        DataBlockIterator columns = V.columns();
+        rnacolumns.begin();
+        DataBlock vc = columns.getData();
+        do {
+            vc.product(state.P().rows(), rnac);
+        } while (columns.next() && rnacolumns.next());
+
     }
 
     private void updateA() {
         DataBlock a = state.a();
+        // normal iteration
+        a.addProduct(R, calcvar ? state.P().columns() : frslts.P(pos).columns());
+        // diffuse correction
         a.addProduct(U.rows(), delta);
-        a.addProduct(R, state.P().columns());
     }
 
     private void updateP() {
-
+        Matrix P = state.P();
+        // normal iteration
+        Matrix PNP = SymmetricMatrix.quadraticForm(N, P);
+        P.sub(PNP);
+        // diffuse correction
+        Matrix UPsiU = SymmetricMatrix.quadraticFormT(Psi, U);
+        P.add(UPsiU);
+        SubMatrix u = U.subMatrix(), vt=V.subMatrix().transpose();
+        LowerTriangularMatrix.rsolve(S, u.transpose());
+        LowerTriangularMatrix.rsolve(S, vt);
+        // compute U*V'
+        Matrix UV=Matrix.square(U.getRowsCount());
+        SubMatrix uv=UV.subMatrix();
+        uv.product(u, vt);
+        P.subMatrix().sub(uv);
+        P.subMatrix().sub(uv.transpose());
+        SymmetricMatrix.reinforceSymmetry(P);
     }
 
     private void xL(DataBlock x) {
@@ -180,42 +220,17 @@ public class AugmentedSmoother {
      *
      */
     private void iterateN() {
-        if (fi == 0) {
-            iterateRegularN();
-        }
-    }
-
-    private void iterateRegularN() {
         if (!missing && f != 0) {
             // N(t-1) = Z'(t)*Z(t)/f(t) + L'(t)*N(t)*L(t)
             XL(N.rows());
             XL(N.columns());
-
-            double cuc = SymmetricMatrix.quadraticForm(N, C);
-
-            // Compute V = C'U
-            DataBlock v = new DataBlock(C.getLength());
-            v.product(N.columns(), C);
-
-            DataBlockIterator columns = N.columns();
-            DataBlock col = columns.getData();
-            DataBlockIterator rows = N.rows();
-            DataBlock row = rows.getData();
-            int i = 0;
-            do {
-                double k = v.get(i++);
-                if (k != 0) {
-                    measurement.XpZd(pos, row, -k);
-                    measurement.XpZd(pos, col, -k);
-                }
-            } while (rows.next() && columns.next());
-
             measurement.VpZdZ(pos, N.subMatrix(), 1 / f);
             SymmetricMatrix.reinforceSymmetry(N);
         } else {
             //T'*N(t)*T
             tvt(N);
         }
+
     }
 
     private void tvt(Matrix N) {
@@ -289,7 +304,7 @@ public class AugmentedSmoother {
         // delta = - (b * a^-1)' + a'^-1*a^-1*B*r = a'^-1 * (a^-1*B*r - b)
         // Psi = = a'^-1*(I - a^-1*B'*N*B*a'^-1)* a^-1
         SubMatrix B = frslts.B(pos);
-        Matrix S = new Matrix(q.a());
+        S = new Matrix(q.a());
         // computes B*r
         delta = new DataBlock(B.getColumnsCount());
         delta.product(B.columns(), R);
@@ -299,10 +314,11 @@ public class AugmentedSmoother {
         LowerTriangularMatrix.lsolve(S, delta);
         // B'NB 
         if (N != null) {
+            // we have to make a copy of B
             Matrix A = new Matrix(B);
             // a^-1*B' =C <-> B'=aC
             LowerTriangularMatrix.rsolve(S, A.subMatrix().transpose());
-            Psi = SymmetricMatrix.quadraticForm(N.subMatrix(), B);
+            Psi = SymmetricMatrix.quadraticForm(N, A);
             Psi.chs();
             Psi.diagonal().add(1);
             // B*a^-1* =C <->B =Ca
@@ -310,5 +326,9 @@ public class AugmentedSmoother {
             // a'^-1*B = C <-> B' = C'a
             LowerTriangularMatrix.lsolve(S, Psi.subMatrix().transpose());
         }
+    }
+
+    public IAugmentedFilteringResults getFilteringResults() {
+        return frslts; 
     }
 }

@@ -18,7 +18,6 @@ package ec.tstoolkit2.ssf.univariate;
 
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.IReadDataBlock;
-import ec.tstoolkit.data.ReadDataBlock;
 import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.DataBlockResults;
 import ec.tstoolkit2.ssf.DataResults;
@@ -92,10 +91,12 @@ public class DefaultSmoothingResults implements ISmoothingResults {
         return f == null ? null : f;
     }
 
+    @Override
     public DataBlock a(int pos) {
         return A.datablock(pos);
     }
 
+    @Override
     public SubMatrix P(int pos) {
         return P == null ? null : P.subMatrix(pos);
     }
@@ -103,7 +104,6 @@ public class DefaultSmoothingResults implements ISmoothingResults {
     public int getStart() {
         return A.getStartSaving();
     }
-
 
     public void prepare(ISsf ssf, int start, int end) {
         int dim = ssf.getStateDim();
@@ -116,6 +116,14 @@ public class DefaultSmoothingResults implements ISmoothingResults {
         if (P != null) {
             P.prepare(dim, start, end);
         }
+    }
+
+    public void rescaleVariances(double factor){
+        if (P != null){
+            P.rescale(factor);
+        }
+        if (f != null)
+            f.rescale(factor);
     }
 
 }

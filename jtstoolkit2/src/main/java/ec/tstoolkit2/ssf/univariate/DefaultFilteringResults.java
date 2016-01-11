@@ -56,7 +56,7 @@ public class DefaultFilteringResults implements IFilteringResults, IStateResults
     public ResultsRange getRange(){
         return range;
     }
-
+    
     public static DefaultFilteringResults full() {
         return new DefaultFilteringResults(true);
     }

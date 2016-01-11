@@ -22,6 +22,7 @@ import ec.tstoolkit.maths.realfunctions.IParametricMapping;
 import ec.tstoolkit2.ssf.dk.sqrt.DefaultDiffuseSquareRootFilteringResults;
 import ec.tstoolkit2.ssf.dk.sqrt.DiffuseSquareRootSmoother;
 import ec.tstoolkit2.ssf.univariate.DefaultSmoothingResults;
+import ec.tstoolkit2.ssf.univariate.IFilteringResults;
 import ec.tstoolkit2.ssf.univariate.ILikelihoodComputer;
 import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.ISsfData;
@@ -79,6 +80,9 @@ public class DkToolkit {
                 : DefaultSmoothingResults.light();
         sresults.prepare(ssf, 0, data.getCount());
         if (smoother.process(ssf, data, sresults)) {
+            if (all) {
+                sresults.rescaleVariances(var(data.getCount(), smoother.getFilteringResults()));
+            }
             return sresults;
         } else {
             return null;
@@ -92,6 +96,9 @@ public class DkToolkit {
                 : DefaultSmoothingResults.light();
         sresults.prepare(ssf, 0, data.getCount());
         if (smoother.process(ssf, data, sresults)) {
+            if (all) {
+                sresults.rescaleVariances(var(data.getCount(), smoother.getFilteringResults()));
+            }
             return sresults;
         } else {
             return null;
@@ -141,7 +148,27 @@ public class DkToolkit {
             filter.process(ssf, data, pe);
             return pe.likelihood();
         }
+    }
 
+    public static double var(int n, IBaseDiffuseFilteringResults frslts) {
+        int m = 0;
+        double ssq = 0;
+        int nd=frslts.getEndDiffusePosition();
+        for (int i = 0; i < nd; ++i) {
+            double e = frslts.error(i);
+            if (Double.isFinite(e) && frslts.diffuseNorm2(i) == 0) {
+                ++m;
+                ssq += e * e / frslts.errorVariance(i);
+            }
+        }
+        for (int i = nd; i < n; ++i) {
+            double e = frslts.error(i);
+            if (Double.isFinite(e)) {
+                ++m;
+                ssq += e * e / frslts.errorVariance(i);
+            }
+        }
+        return ssq / m;
     }
 
 }

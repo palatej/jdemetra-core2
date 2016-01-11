@@ -124,4 +124,12 @@ public class DataResults implements IReadDataBlock{
     public IReadDataBlock rextract(int t0, int length) {
         return new ReadDataBlock(data, t0, length);
     }
+    
+    public void rescale(double factor){
+        if (factor == 1)
+            return;
+        for (int i=0; i<nused; ++i){
+            data[i]*=factor;
+        }
+    }
 }

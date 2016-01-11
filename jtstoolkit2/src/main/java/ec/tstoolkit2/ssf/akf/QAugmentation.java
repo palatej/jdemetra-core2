@@ -47,6 +47,10 @@ public class QAugmentation {
         Q = null;
         det.clear();
     }
+    
+    public int getDegreesofFreedom(){
+        return n-nd;
+    }
 
 //    public void update(Matrix E, DataBlock U) {
 //        Q.subMatrix(0, nd, nd + 1, nd + 1 + nvars).copy(E.subMatrix());
