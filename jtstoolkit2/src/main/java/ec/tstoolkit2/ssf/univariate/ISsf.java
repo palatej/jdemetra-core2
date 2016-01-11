@@ -16,6 +16,9 @@
  */
 package ec.tstoolkit2.ssf.univariate;
 
+import ec.tstoolkit.data.DataBlock;
+import ec.tstoolkit.data.DataBlockIterator;
+import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.ISsfDynamics;
 
 /**
@@ -23,9 +26,71 @@ import ec.tstoolkit2.ssf.ISsfDynamics;
  * @author Jean Palate
  */
 public interface ISsf {
-    
+
     ISsfMeasurement getMeasurement();
+
     ISsfDynamics getDynamics();
+
     int getStateDim();
+
     boolean isTimeInvariant();
+
+//<editor-fold defaultstate="collapsed" desc="auxiliary operations">
+    /**
+     * Computes X*L, where L = T(I - m/f * z)
+     *
+     * @param pos
+     * @param x The row array being modified
+     * @param m A Colunm array (usually P*Z')
+     * @param f The divisor of m (usually ZPZ'+ H)
+     */
+    default void XL(int pos, DataBlock x, DataBlock m, double f) {
+        // XT - [(XT)*m]/f * z 
+        getDynamics().XT(pos, x);
+        getMeasurement().XpZd(pos, x, -x.dot(m) / f);
+    }
+
+    default void ML(int pos, SubMatrix M, DataBlock m, double f) {
+        // MT - [(MT)*m]/f * z
+        ISsfDynamics dynamics = getDynamics();
+        ISsfMeasurement measurement = getMeasurement();
+        // Apply XL on each row of M
+        DataBlockIterator rows = M.rows();
+        DataBlock row = rows.getData();
+        do {
+            dynamics.XT(pos, row);
+            measurement.XpZd(pos, row, -row.dot(m) / f);
+        } while (rows.next());
+    }
+
+    /**
+     *
+     * @param pos
+     * @param x The column array being modified
+     * @param m A Colunm array (usually P*Z')
+     * @param f The divisor of m (usually ZPZ'+ H)
+     */
+    default void LX(int pos, DataBlock x, DataBlock m, double f) {
+        // TX - T*m/f * z * X
+        // TX - T * m * (zX)/f)
+        // T (X - m*(zX/f))
+        x.addAY(-getMeasurement().ZX(pos, x) / f, m);
+        getDynamics().XT(pos, x);
+    }
+
+    default void LM(int pos, SubMatrix M, DataBlock m, double f) {
+        // TX - T*m/f * z * X
+        // TX - T * m * (zX)/f)
+        // T (X - m*(zX/f))
+        ISsfDynamics dynamics = getDynamics();
+        ISsfMeasurement measurement = getMeasurement();
+        // Apply LX on each column of M
+        DataBlockIterator cols = M.columns();
+        DataBlock col = cols.getData();
+        do {
+            col.addAY(-measurement.ZX(pos, col) / f, m);
+            dynamics.XT(pos, col);
+        } while (cols.next());
+    }
+//</editor-fold>
 }

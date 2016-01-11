@@ -272,8 +272,8 @@ public interface ISsfDynamics {
         do {
             XT(pos, row);
         } while (rows.next());
-
     }
+    
 
     /**
      * Adds the variance of the innovations to a given matrix p = p + V(pos)
@@ -283,4 +283,6 @@ public interface ISsfDynamics {
      */
     void addV(int pos, SubMatrix p);
 //</editor-fold>
+    
+
 }
