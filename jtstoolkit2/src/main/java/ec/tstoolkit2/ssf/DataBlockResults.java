@@ -108,5 +108,9 @@ public class DataBlockResults {
     public boolean isInitialized() {
         return data.getDim()>0;
     }
+    
+    public void rescale(double factor){
+        data.rescale(factor);
+    }
 
 }

@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
- /*
+/*
  */
 package ec.tstoolkit2.ssf;
 
@@ -136,4 +136,9 @@ public class DataBlocksResults {
         System.arraycopy(cdims, 0, tmp, 0, cdims.length);
         cdims = tmp;
     }
+
+    public void rescale(double factor) {
+        data.rescale(factor);
+    }
+
 }

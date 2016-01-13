@@ -21,6 +21,7 @@ import ec.tstoolkit.data.IReadDataBlock;
 import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.DataBlockResults;
 import ec.tstoolkit2.ssf.DataResults;
+import ec.tstoolkit2.ssf.ISsfDynamics;
 import ec.tstoolkit2.ssf.MatrixResults;
 import ec.tstoolkit2.ssf.State;
 import ec.tstoolkit2.ssf.StateInfo;
@@ -68,6 +69,7 @@ public class DefaultDisturbanceSmoothingResults implements IDisturbanceSmoothing
         }
     }
 
+    @Override
     public void saveSmoothedMeasurementDisturbance(int t, double err, double v) {
         if (e == null) {
             return;
@@ -77,6 +79,23 @@ public class DefaultDisturbanceSmoothingResults implements IDisturbanceSmoothing
             evar.save(t, v);
         }
     }
+    
+    public DataBlock uComponent(int item){
+        return U.item(item);
+    }
+
+    public DataBlock uComponentVar(int item){
+        return UVar.item(item, item);
+    }
+
+    public DataBlock e(){
+        return e.all();
+    }
+    
+   public DataBlock evar(){
+        return evar.all();
+    }
+
 
     @Override
     public DataBlock u(int pos) {
@@ -103,25 +122,28 @@ public class DefaultDisturbanceSmoothingResults implements IDisturbanceSmoothing
     }
 
     public void prepare(ISsf ssf, int start, int end) {
-        int dim = ssf.getStateDim();
+        ISsfDynamics dynamics = ssf.getDynamics();
+        int dim = dynamics.getStateDim(), edim=dynamics.getInnovationsDim();
         if (e != null && ssf.getMeasurement().hasErrors()) {
             e.prepare(start, end);
             evar.prepare(start, end);
         }
-        U.prepare(dim, start, end);
+        U.prepare(edim, start, end);
 
         if (UVar != null) {
-            UVar.prepare(dim, start, end);
+            UVar.prepare(edim, start, end);
         }
     }
 
-    public void rescaleVariances(double factor) {
-        if (UVar != null) {
-            UVar.rescale(factor);
-        }
-        if (evar != null) {
-            evar.rescale(factor);
-        }
+    public void rescale(double factor) {
+        double se=Math.sqrt(factor);
+        U.rescale(se);
+//        if (UVar != null) {
+//            UVar.rescale(factor);
+//        }
+//        if (evar != null) {
+//            evar.rescale(factor);
+//        }
     }
 
 }

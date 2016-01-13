@@ -18,6 +18,7 @@
  */
 package ec.tstoolkit2.ssf;
 
+import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockStorage;
 import ec.tstoolkit.data.IReadDataBlock;
 import ec.tstoolkit.data.ReadDataBlock;
@@ -51,6 +52,10 @@ public class DataResults implements IReadDataBlock{
         data = new double[end - start];
         for (int i=0; i<data.length; ++i)
             data[i]=Double.NaN;
+    }
+    
+    public DataBlock all(){
+        return new DataBlock(data,0 , nused, 1);
     }
 
     /**
