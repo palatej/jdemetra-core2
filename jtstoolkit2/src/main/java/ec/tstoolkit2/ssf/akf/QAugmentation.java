@@ -16,7 +16,7 @@ import ec.tstoolkit2.ssf.StateInfo;
 
 /**
  *
- * @author Admin
+ * @author Jean Palate
  */
 public class QAugmentation {
 

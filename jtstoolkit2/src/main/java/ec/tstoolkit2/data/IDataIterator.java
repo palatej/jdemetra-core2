@@ -7,7 +7,7 @@ package ec.tstoolkit2.data;
 
 /**
  *
- * @author Admin
+ * @author Jean Palate
  */
 public interface IDataIterator extends IDataReader {
     void set(double val);

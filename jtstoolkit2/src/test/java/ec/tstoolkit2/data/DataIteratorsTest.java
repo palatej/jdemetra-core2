@@ -12,7 +12,7 @@ import org.junit.Ignore;
 
 /**
  *
- * @author Admin
+ * @author Jean Palate
  */
 public class DataIteratorsTest {
     

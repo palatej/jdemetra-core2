@@ -9,7 +9,7 @@ import ec.tstoolkit.data.DataBlock;
 
 /**
  *
- * @author Admin
+ * @author Jean Palate
  */
 public class DataIterators {
 

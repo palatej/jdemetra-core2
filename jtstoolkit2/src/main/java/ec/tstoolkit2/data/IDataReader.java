@@ -7,7 +7,7 @@ package ec.tstoolkit2.data;
 
 /**
  *
- * @author Admin
+ * @author Jean Palate
  */
 public interface IDataReader {
     boolean hasNext();
