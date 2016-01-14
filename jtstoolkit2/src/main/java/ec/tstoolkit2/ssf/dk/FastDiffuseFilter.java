@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package ec.tstoolkit2.ssf.univariate;
+package ec.tstoolkit2.ssf.dk;
 
+import ec.tstoolkit2.ssf.univariate.*;
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockIterator;
 import ec.tstoolkit.maths.matrices.Matrix;
@@ -16,24 +17,25 @@ import ec.tstoolkit2.ssf.ResultsRange;
  *
  * @author Jean Palate
  */
-public class FastFilter {
+public class FastDiffuseFilter {
 
-    private final IFilteringResults frslts;
+    private final IBaseDiffuseFilteringResults frslts;
     private final ISsfMeasurement measurement;
     private final ISsfDynamics dynamics;
-    private final int start, end;
+    private final int start, end, enddiffuse;
     private SubMatrix states;
     private boolean normalized = false;
     // temporaries
     private DataBlock tmp, scol;
     private DataBlockIterator scols;
 
-    public FastFilter(ISsf ssf, IFilteringResults frslts, ResultsRange range) {
+    public FastDiffuseFilter(ISsf ssf, IBaseDiffuseFilteringResults frslts, ResultsRange range) {
         this.frslts = frslts;
         measurement = ssf.getMeasurement();
         dynamics = ssf.getDynamics();
         start = range.getStart();
         end = range.getEnd();
+        enddiffuse = frslts.getEndDiffusePosition();
     }
 
     public boolean filter(SubMatrix x) {
@@ -75,21 +77,40 @@ public class FastFilter {
         boolean missing = !Double.isFinite(frslts.error(i));
         if (!missing) {
             double f = frslts.errorVariance(i);
+            double w;
+            DataBlock K;
+            if (i < enddiffuse) {
+                double fi = frslts.diffuseNorm2(i);
+                if (fi != 0) {
+                    w = fi;
+                    K = frslts.Mi(i);
+                } else {
+                    w = f;
+                    K = frslts.M(i);
+                }
+            } else {
+                w = f;
+                K = frslts.M(i);
+            }
+
             measurement.ZM(i, states, tmp);
             row.sub(tmp);
             if (normalized && f != 0) {
                 row.mul(1 / Math.sqrt(f));
             }
             // update the states
-            DataBlock C = frslts.M(i);
-            // process by column
             scols.begin();
             int j = 0;
             do {
-                scol.addAY(row.get(j++) / f, C);
+                scol.addAY(row.get(j++) / w, K);
+                dynamics.TX(i, scol);
+            } while (scols.next());
+        } else {
+            scols.begin();
+            do {
+                dynamics.TX(i, scol);
             } while (scols.next());
         }
-        dynamics.TM(i, states);
         //  
     }
 

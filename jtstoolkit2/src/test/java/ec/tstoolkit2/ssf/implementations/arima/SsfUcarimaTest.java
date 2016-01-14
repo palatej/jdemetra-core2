@@ -54,10 +54,10 @@ public class SsfUcarimaTest {
 
     final static int N = 100000;
 
-    final static SsfUcarima ssf;
-    final static SsfData ssfData;
-    final static ec.tstoolkit.ssf.ucarima.SsfUcarima ossf;
-    final static ec.tstoolkit.ssf.SsfData ossfData;
+    public final static SsfUcarima ssf;
+    public final static SsfData ssfData;
+    public final static ec.tstoolkit.ssf.ucarima.SsfUcarima ossf;
+    public final static ec.tstoolkit.ssf.SsfData ossfData;
 
     final static Matrix P;
     final static DataBlock A;

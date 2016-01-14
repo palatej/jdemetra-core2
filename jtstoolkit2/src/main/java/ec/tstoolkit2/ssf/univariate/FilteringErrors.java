@@ -38,6 +38,8 @@ public class FilteringErrors implements IFilteringResults {
 
    @Override
     public void save(int t, PredictionError pe) {
+        if (pe.isMissing())
+            return;
         double x = pe.get();
         double v = pe.getVariance();
 

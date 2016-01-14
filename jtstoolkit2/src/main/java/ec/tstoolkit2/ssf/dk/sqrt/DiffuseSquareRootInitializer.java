@@ -97,6 +97,9 @@ public class DiffuseSquareRootInitializer implements OrdinaryFilter.Initializer 
                 }
                 update();
             } else {
+                if (results != null) {
+                    results.save(pos, pe);
+                }
                 astate.setInfo(StateInfo.Concurrent);
             }
             if (results != null) {

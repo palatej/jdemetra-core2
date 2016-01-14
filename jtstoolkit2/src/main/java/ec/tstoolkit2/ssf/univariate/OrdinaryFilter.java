@@ -75,6 +75,7 @@ public class OrdinaryFilter {
         missing = data.isMissing(pos);
         if (missing) {
             // pe_ = null;
+            pe.setMissing();
             return false;
         } else {
             // pe_ = new PredictionError(ssf_.getStateDim(), 1);
@@ -161,6 +162,7 @@ public class OrdinaryFilter {
                 rslts.save(pos, pe);
                 update();
             } else {
+                rslts.save(pos, pe);
                 state.setInfo(StateInfo.Concurrent);
             }
             rslts.save(pos, state);

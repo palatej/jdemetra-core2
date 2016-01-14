@@ -19,7 +19,6 @@
 package ec.tstoolkit2.ssf.dk;
 
 import ec.tstoolkit.data.DataBlock;
-import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit2.ssf.univariate.IFilteringResults;
 
 /**

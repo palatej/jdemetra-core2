@@ -104,5 +104,6 @@ public class PredictionError {
     
     public void setMissing(){
         e=Double.NaN;
+        M.set(Double.NaN);
     }
 }
