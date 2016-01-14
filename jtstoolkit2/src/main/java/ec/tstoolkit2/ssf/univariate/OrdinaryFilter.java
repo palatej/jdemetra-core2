@@ -70,28 +70,6 @@ public class OrdinaryFilter {
         }
     }
 
-    /**
-     * Computes a(t+1|t), P(t+1|t) from a(t|t), P(t|t)
-     *
-     * @param states
-     */
-    protected void pred(SubMatrix states) {
-        pred();
-        dynamics.TM(pos, states);
-    }
-
-    protected boolean error(ISsfData data, DataBlock x, SubMatrix states) {
-        if (error(data)) {
-            for (int i = 0; i < x.getLength(); ++i) {
-                double y = x.get(i);
-                double e = y - measurement.ZX(pos, states.column(i));
-                x.set(i, e);
-            }
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     protected boolean error(ISsfData data) {
         missing = data.isMissing(pos);
@@ -135,16 +113,6 @@ public class OrdinaryFilter {
         // A = a + (M)* F^-1 * v
         state.a().addAY(e / v, C);
         update(state.P(), v, C);//, state_.K.column(i));
-    }
-
-    protected void update(DataBlock x, SubMatrix states) {
-        update();
-        double v = pe.getVariance();
-        DataBlock C = pe.M();
-        for (int i = 0; i < x.getLength(); ++i) {
-            double e = x.get(i);
-            states.column(i).addAY(e / v, C);
-        }
     }
 
     /**
@@ -197,36 +165,6 @@ public class OrdinaryFilter {
             }
             rslts.save(pos, state);
             pred();
-            ++pos;
-        }
-        return true;
-    }
-
-    /**
-     *
-     * @param ssf
-     * @param data
-     * @param rslts
-     * @param x
-     * @return
-     */
-    public boolean process(final ISsf ssf, final ISsfData data, final IFilteringResults rslts, final SubMatrix x) {
-        if (!initialize(ssf, data)) {
-            return false;
-        }
-        SubMatrix states = new Matrix(dynamics.getStateDim(), x.getColumnsCount()).subMatrix();
-        while (pos < end) {
-            DataBlock xcur = x.row(pos);
-            pred(states);
-            rslts.save(pos, state);
-            if (error(data, xcur, states)) {
-                rslts.save(pos, pe);
-                update(xcur, states);
-                rslts.save(pos, state);
-            } else {
-                state.setInfo(StateInfo.Concurrent);
-                rslts.save(pos, state);
-            }
             ++pos;
         }
         return true;
