@@ -21,6 +21,7 @@ import ec.tstoolkit2.ssf.univariate.SsfData;
 import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 
 /**
  *
@@ -71,6 +72,7 @@ public class AugmentedSmootherTest {
     }
 
     @Test
+    @Ignore
     public void stressTestSmoother() {
         int N = 10000;
         SsfUcarima ssf = SsfUcarima.create(ucm);

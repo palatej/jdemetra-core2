@@ -78,15 +78,15 @@ public class FastDiffuseFilterTest {
     }
 
     @Test
-    //@Ignore
+    @Ignore
     public void stressTestUcarima() {
         DefaultDiffuseFilteringResults fresults = DkToolkit.filter(ssf, ssfData, false);
-        Matrix x = new Matrix(ssfData.getCount(), 100);
+        Matrix x = new Matrix(ssfData.getCount(), 1);
         x.randomize(0);
         long t0 = System.currentTimeMillis();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < 100000; ++i) {
             FastDiffuseFilter filter = new FastDiffuseFilter(ssf, fresults, new ResultsRange(fresults.getEndDiffusePosition(), ssfData.getCount()));
-            filter.filter(x.subMatrix());
+            filter.filter(x.column(0));
         }
         long t1 = System.currentTimeMillis();
         System.out.println(t1 - t0);

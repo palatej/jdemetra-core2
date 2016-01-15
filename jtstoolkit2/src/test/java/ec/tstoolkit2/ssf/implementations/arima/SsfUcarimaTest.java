@@ -121,7 +121,7 @@ public class SsfUcarimaTest {
         dynref.TX(0, x1);
         dyn.TX(dim, x2);
         ossf.TX(dim, x3);
-        assertTrue(x1.distance(x2) < 1e-9);
+        assertTrue(x1.distance(x2) < 1e-6);
         assertTrue(x1.distance(x3) < 1e-9);
         dynref.XT(0, x1);
         dyn.XT(0, x2);

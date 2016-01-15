@@ -49,7 +49,7 @@ public class FastFilter {
             states = new Matrix(dim, x.getColumnsCount()).subMatrix();
         } else if (x0.getRowsCount() != dim || x0.getColumnsCount() != x.getColumnsCount()) {
             return false;
-        } else if (end - start < x.getRowsCount() && (!dynamics.isTimeInvariant() || !measurement.isTimeInvariant())) {
+        } else if (end - start != x.getRowsCount()) {
             return false;
         } else {
             states = x0;
@@ -65,7 +65,7 @@ public class FastFilter {
     }
 
     private void prepareTmp() {
-        int dim = states.getRowsCount(), nvars = states.getColumnsCount();
+        int nvars = states.getColumnsCount();
         tmp = new DataBlock(nvars);
         scols = states.columns();
         scol = scols.getData();

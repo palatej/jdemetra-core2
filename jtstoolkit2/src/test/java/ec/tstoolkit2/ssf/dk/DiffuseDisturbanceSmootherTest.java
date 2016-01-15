@@ -94,7 +94,7 @@ public class DiffuseDisturbanceSmootherTest {
     }
 
     @Test
-    //@Ignore
+    @Ignore
     public void stressTestStateSmoothing() {
         int K = 10000;
         ec.tstoolkit.ssf.ucarima.SsfUcarima ossf = new ec.tstoolkit.ssf.ucarima.SsfUcarima(ucm);

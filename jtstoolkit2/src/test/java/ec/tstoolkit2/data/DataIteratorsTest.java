@@ -19,7 +19,7 @@ public class DataIteratorsTest {
     public DataIteratorsTest() {
     }
 
-    //@Ignore
+    @Ignore
     @Test
     public void stressTestDot() {
         int L=1000, K=1000000;
