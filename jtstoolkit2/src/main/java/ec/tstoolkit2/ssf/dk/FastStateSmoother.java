@@ -19,8 +19,6 @@ package ec.tstoolkit2.ssf.dk;
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockStorage;
 import ec.tstoolkit.maths.matrices.Matrix;
-import ec.tstoolkit.maths.matrices.SubMatrix;
-import ec.tstoolkit.maths.matrices.SymmetricMatrix;
 import ec.tstoolkit2.ssf.ISsfDynamics;
 import ec.tstoolkit2.ssf.univariate.DefaultDisturbanceSmoothingResults;
 import ec.tstoolkit2.ssf.univariate.DisturbanceSmoother;

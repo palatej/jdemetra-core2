@@ -18,6 +18,7 @@ package ec.tstoolkit2.ssf.dk;
 
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockStorage;
+import ec.tstoolkit.data.DescriptiveStatistics;
 import ec.tstoolkit.dstats.Normal;
 import ec.tstoolkit.maths.matrices.LowerTriangularMatrix;
 import ec.tstoolkit.maths.matrices.Matrix;
@@ -57,7 +58,7 @@ public class DiffuseSimulationSmoother {
 
     private Matrix LA;
     private Matrix[] LQ;
-    private Matrix[] S;
+    private Matrix[] Q, S, SQ;
     private final ISsf ssf;
     private final ISsfData data;
     private final ISsfDynamics dynamics;
@@ -70,10 +71,14 @@ public class DiffuseSimulationSmoother {
         measurement = ssf.getMeasurement();
         this.data = data;
         initSsf();
-        smoothing=new Smoothing();
+        smoothing = new Smoothing();
     }
-    
-    public Simulation newSimulation(){
+
+    public Smoothing getReferenceSmoothing() {
+        return smoothing;
+    }
+
+    public Simulation newSimulation() {
         return new Simulation();
     }
 
@@ -104,8 +109,38 @@ public class DiffuseSimulationSmoother {
         }
     }
 
+    private Matrix SQ(int pos) {
+        if (SQ.length == 1) {
+            return SQ[0];
+        } else if (pos < SQ.length) {
+            return SQ[pos];
+        } else if (!dynamics.hasS()) {
+            return Q(pos);
+        } else {
+            Matrix s = new Matrix(dynamics.getStateDim(), dynamics.getInnovationsDim());
+            dynamics.S(pos, s.subMatrix());
+            return s.times(Q(pos));
+        }
+    }
+
+    private Matrix Q(int pos) {
+        if (Q.length == 1) {
+            return Q[0];
+        } else if (pos < Q.length) {
+            return Q[pos];
+        } else {
+            Matrix Q = Matrix.square(dynamics.getInnovationsDim());
+            dynamics.Q(pos, Q.subMatrix());
+            return Q;
+        }
+    }
+
     private double lh(int pos) {
         return Math.sqrt(ssf.getMeasurement().errorVariance(pos));
+    }
+
+    private double h(int pos) {
+        return ssf.getMeasurement().errorVariance(pos);
     }
 
     private void initSsf() {
@@ -115,20 +150,26 @@ public class DiffuseSimulationSmoother {
         SymmetricMatrix.lcholesky(LA, EPS);
 
         if (dynamics.isTimeInvariant()) {
+            Q = new Matrix[1];
             LQ = new Matrix[1];
             S = new Matrix[1];
+            SQ = new Matrix[1];
         } else {
+            Q = new Matrix[data.getLength()];
             LQ = new Matrix[data.getLength()];
             S = new Matrix[data.getLength()];
+            SQ = new Matrix[data.getLength()];
         }
-        for (int i = 0; i < LQ.length; ++i) {
-            Matrix Q = Matrix.square(resdim);
-            dynamics.Q(i, Q.subMatrix());
-            SymmetricMatrix.lcholesky(Q, EPS);
-            LQ[i] = Q;
+        for (int i = 0; i < Q.length; ++i) {
+            Matrix q = Matrix.square(resdim);
+            dynamics.Q(i, q.subMatrix());
+            Q[i] = q.clone();
             Matrix s = new Matrix(dim, resdim);
             dynamics.S(i, s.subMatrix());
-            S[i]=s;
+            S[i] = s;
+            SQ[i] = s.times(q);
+            SymmetricMatrix.lcholesky(q, EPS);
+            LQ[i] = q;
         }
     }
 
@@ -151,37 +192,200 @@ public class DiffuseSimulationSmoother {
         fillRandoms(a);
         LowerTriangularMatrix.rmul(LA, a);
     }
-    
-    public class Smoothing {
-        final IBaseDiffuseFilteringResults frslts;
-        final DataBlockStorage smoothedStates, smoothedInnovations;
-        
-        Smoothing(){
-            frslts=DkToolkit.sqrtFilter(ssf, data, false);
-            int dim=dynamics.getStateDim(), resdim=dynamics.getInnovationsDim();
-            smoothedStates=new DataBlockStorage(dim, data.getLength());
-            smoothedInnovations=new DataBlockStorage(resdim, data.getLength());
+
+    abstract class BaseSimulation {
+
+        protected final IBaseDiffuseFilteringResults frslts;
+        protected final DataBlockStorage smoothedInnovations;
+        protected final DataBlock esm;
+        protected DataBlockStorage smoothedStates;
+        protected DataBlock a0;
+        protected final int dim, resdim, n, nd;
+        protected DataBlock R, Ri;
+
+        protected abstract double getError(int pos);
+
+        protected BaseSimulation(IBaseDiffuseFilteringResults frslts) {
+            this.frslts = frslts;
+            dim = dynamics.getStateDim();
+            resdim = dynamics.getInnovationsDim();
+            n = data.getLength();
+            nd = frslts.getEndDiffusePosition();
+            smoothedInnovations = new DataBlockStorage(resdim, n);
+            if (measurement.hasErrors()) {
+                esm = new DataBlock(n);
+            } else {
+                esm = null;
+            }
         }
-        
+
+        protected void smooth() {
+            R = new DataBlock(dim);
+            Ri = new DataBlock(dim);
+            // we reproduce here the usual iterations of the smoother
+            doNormalSmoothing();
+            doDiffuseSmoohing();
+            computeInitialState();
+        }
+
+        private void doNormalSmoothing() {
+            double e, v;
+            DataBlock M = new DataBlock(dim);
+            DataBlock U = new DataBlock(resdim);
+            boolean missing;
+            int pos = n;
+            while (--pos >= nd) {
+                // Get info
+                e = getError(pos);
+                v = frslts.errorVariance(pos);
+                M.copy(frslts.M(pos));
+                missing = !DescriptiveStatistics.isFinite(e);
+                // Iterate R
+                dynamics.XT(pos, R);
+                if (!missing && e != 0) {
+                    // RT
+                    double c = (e - R.dot(M)) / v;
+                    measurement.XpZd(pos, R, c);
+                }
+                // Computes esm, U
+                if (esm != null) {
+                    if (!missing) {
+                        esm.set(pos, h(pos));
+                    } else {
+                        esm.set(pos, Double.NaN);
+                    }
+                }
+                U.product(R, SQ(pos).columns());
+                smoothedInnovations.save(pos, U);
+            }
+        }
+
+        private void doDiffuseSmoohing() {
+            double e, f, fi, c;
+            DataBlock C = new DataBlock(dim), Ci = new DataBlock(dim);
+            DataBlock U = new DataBlock(resdim);
+            boolean missing;
+            int pos = nd;
+            while (--pos >= 0) {
+                // Get info
+                e = frslts.error(pos);
+                f = frslts.errorVariance(pos);
+                fi = frslts.diffuseNorm2(pos);
+                C.copy(frslts.M(pos));
+                if (fi != 0) {
+                    Ci.copy(frslts.Mi(pos));
+                    Ci.mul(1 / fi);
+                    C.addAY(-f, Ci);
+                    C.mul(1 / fi);
+                } else {
+                    C.mul(1 / f);
+                    Ci.set(0);
+                }
+                missing = !DescriptiveStatistics.isFinite(e);
+                // Iterate R
+                if (fi == 0) {
+                    dynamics.XT(pos, R);
+                    dynamics.XT(pos, Ri);
+                    if (!missing && f != 0) {
+                        c = e / f - R.dot(C);
+                        measurement.XpZd(pos, R, c);
+                    }
+                } else {
+                    dynamics.XT(pos, R);
+                    dynamics.XT(pos, Ri);
+                    if (!missing && f != 0) {
+                        c = -Ri.dot(Ci);
+                        double ci = e / fi + c - R.dot(C);
+                        measurement.XpZd(pos, Ri, ci);
+                        double cf = -R.dot(Ci);
+                        measurement.XpZd(pos, R, cf);
+                    }
+                }
+                // Computes esm, U
+                if (esm != null) {
+                    if (!missing) {
+                        esm.set(pos, h(pos));
+                    } else {
+                        esm.set(pos, Double.NaN);
+                    }
+                }
+                U.product(R, SQ(pos).columns());
+                smoothedInnovations.save(pos, U);
+            }
+        }
+
+        private void computeInitialState() {
+            // initial state
+            a0 = new DataBlock(dim);
+            Matrix Pf0 = Matrix.square(dim);
+            dynamics.a0(a0, StateInfo.Forecast);
+            dynamics.Pf0(Pf0.subMatrix(), StateInfo.Forecast);
+            // stationary initialization
+            a0.addProduct(R, Pf0.columns());
+
+            // non stationary initialisation
+            Matrix Pi0 = Matrix.square(dim);
+            dynamics.Pi0(Pi0.subMatrix());
+            a0.addProduct(Ri, Pi0.columns());
+        }
+
+        public DataBlock getSmoothedInnovations(int pos) {
+            return smoothedInnovations.block(pos);
+        }
+
+        public DataBlock getSmoothedState(int pos) {
+            if (smoothedStates == null) {
+                generatesmoothedStates();
+            }
+            return smoothedStates.block(pos);
+        }
+
+        public DataBlockStorage getSmoothedInnovations() {
+            return smoothedInnovations;
+        }
+
+        public DataBlockStorage getSmoothedStates() {
+            if (smoothedStates == null) {
+                generatesmoothedStates();
+            }
+            return smoothedStates;
+        }
+
+        private void generatesmoothedStates() {
+            smoothedStates = new DataBlockStorage(dim, n);
+            smoothedStates.save(0, a0);
+            int cur = 1;
+            DataBlock a = a0.deepClone();
+            do {
+                // next: a(t+1) = T a(t) + S*r(t)
+                dynamics.TX(cur, a);
+                a.addProduct(smoothedInnovations.block(cur), S(cur).rows());
+                smoothedStates.save(cur++, a);
+            } while (cur < n);
+        }
     }
 
-    public class Simulation {
+    public class Smoothing extends BaseSimulation {
 
-        final DataBlockStorage states;
-        final DataBlockStorage transitionInnovations;
-        final double[] measurementErrors;
-        private final double[] simulatedData;
-        DataBlockStorage smoothedStates;
-        DataBlockStorage smoothedInnovations;
-        DataBlockStorage R, Ri;
+        Smoothing() {
+            super(DkToolkit.sqrtFilter(ssf, data, false));
+            smooth();
+        }
 
-        Simulation() {
-            int dim = dynamics.getStateDim();
-            int nres = dynamics.getInnovationsDim();
+        @Override
+        protected double getError(int pos) {
+            return frslts.error(pos);
+        }
+
+    }
+
+    public class Simulation extends BaseSimulation{
+        
+        public Simulation(){
+            super(smoothing.frslts);
             boolean err = measurement.hasErrors();
-            int n = data.getLength();
             states = new DataBlockStorage(dim, n);
-            transitionInnovations = new DataBlockStorage(nres, n);
+            transitionInnovations = new DataBlockStorage(resdim, n);
             if (err) {
                 measurementErrors = new double[n];
                 generateMeasurementRandoms(new DataBlock(measurementErrors));
@@ -190,7 +394,13 @@ public class DiffuseSimulationSmoother {
             }
             simulatedData = new double[n];
             generateData();
+            smooth();
         }
+
+        final DataBlockStorage states;
+        final DataBlockStorage transitionInnovations;
+        final double[] measurementErrors;
+        private final double[] simulatedData;
 
         private void generateData() {
             DataBlock a0f = new DataBlock(dynamics.getStateDim());
@@ -223,6 +433,11 @@ public class DiffuseSimulationSmoother {
          */
         public double[] getSimulatedData() {
             return simulatedData;
+        }
+
+        @Override
+        protected double getError(int pos) {
+            return simulatedData[pos]-measurement.ZX(pos, states.block(pos));
         }
     }
 }
