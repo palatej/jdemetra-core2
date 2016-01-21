@@ -41,7 +41,7 @@ public class AkfToolkit {
     public static DefaultAugmentedFilteringResults filter(ISsf ssf, ISsfData data, boolean all) {
         DefaultAugmentedFilteringResults frslts = all
                 ? DefaultAugmentedFilteringResults.full() : DefaultAugmentedFilteringResults.light();
-        frslts.prepare(ssf, 0, data.getCount());
+        frslts.prepare(ssf, 0, data.getLength());
         AugmentedFilterInitializer initializer = new AugmentedFilterInitializer(frslts);
         OrdinaryFilter filter = new OrdinaryFilter(initializer);
         filter.process(ssf, data, frslts);
@@ -53,10 +53,10 @@ public class AkfToolkit {
         smoother.setCalcVariances(all);
         DefaultSmoothingResults sresults = all ? DefaultSmoothingResults.full()
                 : DefaultSmoothingResults.light();
-        sresults.prepare(ssf, 0, data.getCount());
+        sresults.prepare(ssf, 0, data.getLength());
         if (smoother.process(ssf, data, sresults)) {
             if (all) {
-                sresults.rescaleVariances(var(data.getCount(), smoother.getFilteringResults()));
+                sresults.rescaleVariances(var(data.getLength(), smoother.getFilteringResults()));
             }
             return sresults;
         } else {
@@ -69,7 +69,7 @@ public class AkfToolkit {
         public ILikelihood compute(ISsf ssf, ISsfData data) {
             AugmentedFilter akf = new AugmentedFilter();
             AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
-            pe.prepare(ssf, data.getCount());
+            pe.prepare(ssf, data.getLength());
             if (!akf.process(ssf, data, pe)) {
                 return null;
             }
@@ -83,7 +83,7 @@ public class AkfToolkit {
         @Override
         public ILikelihood compute(ISsf ssf, ISsfData data) {
             AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
-            pe.prepare(ssf, data.getCount());
+            pe.prepare(ssf, data.getLength());
             AugmentedFilterInitializer initializer = new AugmentedFilterInitializer(pe);
             OrdinaryFilter filter = new OrdinaryFilter(initializer);
             filter.process(ssf, data, pe);

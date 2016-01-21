@@ -151,6 +151,13 @@ public class VarDynamics implements ISsfDynamics {
         }
     }
 
+//    @Override
+//    public void addSX(int pos, DataBlock x, DataBlock y) {
+//        for (int i = 0, r = 0; i < neq; ++i, r += nlx) {
+//            y.add(r, x.get(i));
+//        }
+//    }
+//    
     @Override
     public void T(int pos, SubMatrix tr) {
         Matrix v = desc.getVarMatrix();

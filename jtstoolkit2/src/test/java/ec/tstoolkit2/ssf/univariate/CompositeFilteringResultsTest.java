@@ -54,7 +54,7 @@ public class CompositeFilteringResultsTest {
         DiffuseSquareRootInitializer initializer = new DiffuseSquareRootInitializer(null);
         OrdinaryFilter filter = new OrdinaryFilter(initializer);
         DefaultFilteringResults rslts1 = DefaultFilteringResults.full();
-        rslts1.prepare(create, 0, data.getCount());
+        rslts1.prepare(create, 0, data.getLength());
         CompositeFilteringResults all = new CompositeFilteringResults(rslts0, rslts1);
         filter.process(create, data, all);
         assertEquals(rslts0.likelihood().getLogLikelihood(),DkToolkit.likelihoodComputer(false, false).compute(create, data).getLogLikelihood(), 1e-8);

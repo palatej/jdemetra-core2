@@ -131,7 +131,7 @@ public class DurbinKoopmanInitializer implements OrdinaryFilter.Initializer {
         this.data = data;
         int r = ssf.getStateDim();
         pos = 0;
-        int end = data.getCount();
+        int end = data.getLength();
         if (!initState()) {
             return -1;
         }

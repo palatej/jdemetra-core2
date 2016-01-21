@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.implementations;
 
@@ -94,6 +94,11 @@ public class TimeVaryingDynamics {
         public void S(int pos, SubMatrix sm) {
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//            y.add(x);
+//        }
+//
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.diagonal().set(1);
@@ -199,6 +204,11 @@ public class TimeVaryingDynamics {
         public void S(int pos, SubMatrix sm) {
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//            y.add(x);
+//        }
+//
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.diagonal().set(1);

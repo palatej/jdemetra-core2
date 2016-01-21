@@ -46,6 +46,6 @@ public interface ISsfData {
      *
      * @return
      */
-    int getCount();
+    int getLength();
  
 }

@@ -135,6 +135,15 @@ public class StochasticDifference extends Ssf {
             }
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//            if (!dyn.hasS()) {
+//                y.range(ddim, y.getLength()).add(x);
+//            } else {
+//                dyn.addSX(pos, x, y.range(ddim, y.getLength()));
+//            }
+//        }
+//
         @Override
         public void T(int pos, SubMatrix tr) {
             DataBlock row = tr.row(0);

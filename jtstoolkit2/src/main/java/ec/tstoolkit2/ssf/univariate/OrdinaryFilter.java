@@ -129,7 +129,7 @@ public class OrdinaryFilter {
         measurement = ssf.getMeasurement();
         dynamics = ssf.getDynamics();
         pos = 0;
-        end = data.getCount();
+        end = data.getLength();
         pe = new PredictionError(dynamics.getStateDim());
         if (initializer == null) {
             state = State.of(dynamics, StateInfo.Forecast);

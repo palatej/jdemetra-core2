@@ -5,20 +5,36 @@
  */
 package ec.tstoolkit2.ssf.dk;
 
+import data.Models;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
  * @author Admin
  */
 public class DiffuseSimulationSmootherTest {
-    
+
+    final static int N = 10000;
+
     public DiffuseSimulationSmootherTest() {
     }
 
     @Test
-    public void testSomeMethod() {
+    public void testGenerate() {
+        DiffuseSimulationSmoother smoother = new DiffuseSimulationSmoother(Models.ssfUcarima, Models.ssfProd);
+        DiffuseSimulationSmoother.Simulation simul = smoother.newSimulation();
+        simul.getSimulatedData();
     }
-    
+
+    @Test
+    public void stressTestGenerate() {
+        long t0 = System.currentTimeMillis();
+        DiffuseSimulationSmoother smoother = new DiffuseSimulationSmoother(Models.ssfUcarima, Models.ssfProd);
+        for (int i = 0; i < N; ++i) {
+            DiffuseSimulationSmoother.Simulation simul = smoother.newSimulation();
+            simul.getSimulatedData();
+        }
+        long t1 = System.currentTimeMillis();
+        System.out.println(t1 - t0);
+    }
 }

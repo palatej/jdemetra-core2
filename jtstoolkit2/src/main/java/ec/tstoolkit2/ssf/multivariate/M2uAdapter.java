@@ -83,7 +83,7 @@ public class M2uAdapter {
         }
 
         @Override
-        public int getCount() {
+        public int getLength() {
             return data.getCount() * nvars;
         }
     }
@@ -234,6 +234,13 @@ public class M2uAdapter {
             }
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//            if (pos % nstep == nstep - 1) {
+//                mdynamics.addSX(pos / nstep, x, y);
+//            }
+//        }
+//
         @Override
         public void T(int pos, SubMatrix tr) {
             if (pos % nstep == nstep - 1) {

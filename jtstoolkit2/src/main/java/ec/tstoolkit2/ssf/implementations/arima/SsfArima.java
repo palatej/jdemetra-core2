@@ -361,6 +361,14 @@ public class SsfArima extends Ssf {
             sm.column(0).copyFrom(psi_, 0);
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//            if (psi_ == null) {
+//                init();
+//            }
+//            y.addAY(x.get(0), new DataBlock(psi_));
+//        }
+//
         @Override
         public void U(int pos, SubMatrix u) {
             if (psi_ == null) {
@@ -661,6 +669,11 @@ public class SsfArima extends Ssf {
             sm.column(0).copyFrom(psi_, 0);
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//             y.addAY(x.get(0), new DataBlock(psi_));
+//        }
+//        
         @Override
         public void addV(int pos, SubMatrix p) {
             p.add(V.subMatrix());

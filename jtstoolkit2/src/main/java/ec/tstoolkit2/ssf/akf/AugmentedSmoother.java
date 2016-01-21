@@ -55,7 +55,7 @@ public class AugmentedSmoother {
 
     public boolean process(final ISsf ssf, final ISsfData data, ISmoothingResults sresults) {
         IAugmentedFilteringResults fresults = AkfToolkit.filter(ssf, data, true);
-        return process(ssf, data.getCount(), fresults, sresults);
+        return process(ssf, data.getLength(), fresults, sresults);
     }
 
     public boolean process(ISsf ssf, final int endpos, IAugmentedFilteringResults results, ISmoothingResults sresults) {

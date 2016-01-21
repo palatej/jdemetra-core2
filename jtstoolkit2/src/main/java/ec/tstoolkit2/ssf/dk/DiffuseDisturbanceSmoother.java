@@ -42,7 +42,7 @@ public class DiffuseDisturbanceSmoother {
     public boolean process(final ISsf ssf, final ISsfData data, IDisturbanceSmoothingResults sresults) {
         IBaseDiffuseFilteringResults fresults = DkToolkit.sqrtFilter(ssf, data, true);
         // rescale the variances
-        return process(ssf, data.getCount(), fresults, sresults);
+        return process(ssf, data.getLength(), fresults, sresults);
     }
 
     public boolean process(ISsf ssf, final int endpos, IBaseDiffuseFilteringResults results, IDisturbanceSmoothingResults sresults) {

@@ -44,7 +44,7 @@ public class DisturbanceSmoother {
         if (!filter.process(ssf, data, fresults)) {
             return false;
         }
-        return process(ssf, 0, data.getCount(), fresults);
+        return process(ssf, 0, data.getLength(), fresults);
     }
 
     public boolean process(ISsf ssf, DefaultFilteringResults results) {
@@ -73,7 +73,7 @@ public class DisturbanceSmoother {
         if (!filter.process(ssf, data, fresults)) {
             return false;
         }
-        return process(ssf, stop, data.getCount(), fresults);
+        return process(ssf, stop, data.getLength(), fresults);
     }
 
     public boolean process(ISsf ssf, final int start, final int end, IFilteringResults results, IDisturbanceSmoothingResults sresults) {
@@ -181,7 +181,7 @@ public class DisturbanceSmoother {
             if (res) {
                 esmVariance = h - h * h * v;
             }
-            // v(U) = Q-S'NS
+            // v(U) = Q-Q'S'NSQ
             UVar.copy(Q);
             Matrix V = SymmetricMatrix.quadraticForm(N, SQ);
             UVar.sub(V);

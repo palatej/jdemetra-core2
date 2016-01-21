@@ -85,6 +85,11 @@ public final class InitializedDynamics implements ISsfDynamics {
         dyn.S(pos + startpos, sm);
     }
 
+//    @Override
+//    public void addSX(int pos, DataBlock x, DataBlock y) {
+//        dyn.addSX(pos, x, y);
+//    }
+//
     @Override
     public void T(int pos, SubMatrix tr) {
         dyn.T(pos + startpos, tr);

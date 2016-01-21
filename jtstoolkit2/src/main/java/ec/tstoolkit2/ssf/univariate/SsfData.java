@@ -13,7 +13,7 @@ import ec.tstoolkit.data.ReadDataBlock;
  *
  * @author Jean Palate
  */
-public class SsfData implements ISsfData {
+public class SsfData implements ISsfData, IReadDataBlock {
 
     private final IReadDataBlock x_;
 
@@ -45,7 +45,17 @@ public class SsfData implements ISsfData {
     }
 
     @Override
-    public int getCount() {
+    public int getLength() {
         return x_.getLength();
+    }
+
+    @Override
+    public void copyTo(double[] buffer, int start) {
+        x_.copyTo(buffer, start);
+    }
+
+    @Override
+    public IReadDataBlock rextract(int start, int length) {
+        return x_.rextract(start, length);
     }
 }

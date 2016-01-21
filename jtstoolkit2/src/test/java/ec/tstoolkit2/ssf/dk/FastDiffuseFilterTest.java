@@ -16,20 +16,12 @@
  */
 package ec.tstoolkit2.ssf.dk;
 
-import ec.tstoolkit.arima.ArimaModel;
+import data.Models;
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.maths.matrices.Matrix;
-import ec.tstoolkit.sarima.SarimaModel;
-import ec.tstoolkit.sarima.SarimaModelBuilder;
-import ec.tstoolkit.timeseries.simplets.TsData;
-import ec.tstoolkit.ucarima.ModelDecomposer;
-import ec.tstoolkit.ucarima.SeasonalSelector;
-import ec.tstoolkit.ucarima.TrendCycleSelector;
-import ec.tstoolkit.ucarima.UcarimaModel;
 import ec.tstoolkit2.ssf.ResultsRange;
-import ec.tstoolkit2.ssf.implementations.arima.SsfUcarima;
+import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.SsfData;
-import java.util.Random;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.Ignore;
@@ -40,39 +32,6 @@ import org.junit.Ignore;
  */
 public class FastDiffuseFilterTest {
     
-    final static int N = 100000;
-
-    public final static SsfUcarima ssf;
-    public final static SsfData ssfData;
-    public final static TsData xts;
-
-    static {
-        int M = 50;
-        TrendCycleSelector tsel = new TrendCycleSelector(.5);
-        tsel.setDefaultLowFreqThreshold(12);
-        SeasonalSelector ssel = new SeasonalSelector(12, 3);
-
-        ModelDecomposer decomposer = new ModelDecomposer();
-        decomposer.add(tsel);
-        decomposer.add(ssel);
-        xts = data.Data.X.clone();
-        int[] missing = new int[M];
-        Random rng = new Random();
-        for (int i = 0; i < M; ++i) {
-            missing[i] = rng.nextInt(xts.getLength());
-        }
-        SarimaModel arima = new SarimaModelBuilder().createAirlineModel(12, -.8, -.9);
-        UcarimaModel ucm = decomposer.decompose(ArimaModel.create(arima));
-        ucm.setVarianceMax(-1);
-        ucm.simplify();
-
-        for (int i = 0; i < M; ++i) {
-            xts.setMissing(missing[i]);
-        }
-
-        ssf = SsfUcarima.create(ucm);
-        ssfData = new SsfData(xts);
-    }
 
     public FastDiffuseFilterTest() {
     }
@@ -80,12 +39,14 @@ public class FastDiffuseFilterTest {
     @Test
     @Ignore
     public void stressTestUcarima() {
-        DefaultDiffuseFilteringResults fresults = DkToolkit.filter(ssf, ssfData, false);
-        Matrix x = new Matrix(ssfData.getCount(), 1);
+        ISsf ssf=Models.ssfUcarima;
+        SsfData data=Models.ssfXRandom;
+        DefaultDiffuseFilteringResults fresults = DkToolkit.filter(ssf, data, false);
+        Matrix x = new Matrix(data.getLength(), 1);
         x.randomize(0);
         long t0 = System.currentTimeMillis();
         for (int i = 0; i < 100000; ++i) {
-            FastDiffuseFilter filter = new FastDiffuseFilter(ssf, fresults, new ResultsRange(fresults.getEndDiffusePosition(), ssfData.getCount()));
+            FastDiffuseFilter filter = new FastDiffuseFilter(ssf, fresults, new ResultsRange(fresults.getEndDiffusePosition(), data.getLength()));
             filter.filter(x.column(0));
         }
         long t1 = System.currentTimeMillis();
@@ -94,11 +55,13 @@ public class FastDiffuseFilterTest {
 
     @Test
     public void testUcarima() {
-        DefaultDiffuseFilteringResults fresults = DkToolkit.filter(ssf, ssfData, false);
-        Matrix x = new Matrix(ssfData.getCount(), 10);
+        ISsf ssf=Models.ssfUcarima;
+        SsfData data=Models.ssfXRandom;
+        DefaultDiffuseFilteringResults fresults = DkToolkit.filter(ssf, data, false);
+        Matrix x = new Matrix(data.getLength(), 10);
         x.randomize();
-        x.column(0).copy(xts);
-        FastDiffuseFilter filter = new FastDiffuseFilter(ssf, fresults, new ResultsRange(0, ssfData.getCount()));
+        x.column(0).copy(data);
+        FastDiffuseFilter filter = new FastDiffuseFilter(ssf, fresults, new ResultsRange(0, data.getLength()));
         filter.filter(x.subMatrix());
         assertTrue(new DataBlock(fresults.errors()).distance(x.column(0))<1e-9);
     }

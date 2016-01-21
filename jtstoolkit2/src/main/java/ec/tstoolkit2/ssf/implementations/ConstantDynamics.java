@@ -77,6 +77,11 @@ public class ConstantDynamics implements ISsfDynamics {
     public void S(int pos, SubMatrix sm) {
     }
 
+//    @Override
+//    public void addSX(int pos, DataBlock x, DataBlock y) {
+//        y.add(x);
+//    }
+//
     @Override
     public void T(int pos, SubMatrix tr) {
         tr.diagonal().set(1);

@@ -31,7 +31,7 @@ public class SsfDataWindow implements ISsfData {
         this.data = data;
         this.start = start;
         this.end = end;
-        n = data.getCount();
+        n = data.getLength();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class SsfDataWindow implements ISsfData {
     }
 
     @Override
-    public int getCount() {
+    public int getLength() {
         return end - start;
     }
 

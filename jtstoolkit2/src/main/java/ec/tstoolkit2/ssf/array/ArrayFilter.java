@@ -61,7 +61,7 @@ public class ArrayFilter {
 
     private boolean initFilter() {
         pos_ = 0;
-        end_ = data_.getCount();
+        end_ = data_.getLength();
         nres_ = dyn_.getInnovationsDim();
         dim_ = dyn_.getStateDim();
         A = new Matrix(dim_ + 1, dim_ + 1 + nres_);

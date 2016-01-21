@@ -136,7 +136,7 @@ public class AugmentedFilter {
 
     private boolean initFilter() {
         pos = 0;
-        end = data.getCount();
+        end = data.getLength();
         return true;
     }
 

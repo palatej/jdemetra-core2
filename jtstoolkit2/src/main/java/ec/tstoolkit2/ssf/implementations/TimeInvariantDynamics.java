@@ -232,6 +232,14 @@ public class TimeInvariantDynamics implements ISsfDynamics {
         }
     }
 
+//    @Override
+//    public void addSX(int pos, DataBlock x, DataBlock y) {
+//        if (S != null)
+//            y.addProduct(S.rows(), x);
+//        else
+//            y.add(x);
+//    }
+//    
     @Override
     public void T(int pos, SubMatrix tr) {
         tr.copy(T.subMatrix());

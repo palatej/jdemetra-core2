@@ -130,6 +130,16 @@ public interface ISsfDynamics {
      * @param sm
      */
     void S(int pos, SubMatrix sm);
+    
+//    /**
+//     * Computes y = y + S * x
+//     * This method is used is smoothing and simulations
+//     * S~dim * nres, x ~ nres, 
+//     * @param pos
+//     * @param x 
+//     * @param y 
+//     */
+//    void addSX(int pos, DataBlock x, DataBlock y);
 
     /**
      * Gets the transition matrix.

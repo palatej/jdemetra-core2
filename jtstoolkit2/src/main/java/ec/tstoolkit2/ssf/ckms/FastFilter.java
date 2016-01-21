@@ -82,7 +82,7 @@ public class FastFilter<F extends ISsf> {
         m_ = ssf.getMeasurement();
         FastState state = new FastState(dyn_.getStateDim());
         pos_ = 0;
-        end_ = data_.getCount();
+        end_ = data_.getLength();
         if (!initializer_.initialize(ssf, state)) {
             return false;
         }

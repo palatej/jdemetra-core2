@@ -139,6 +139,16 @@ public class LocalLinearTrend extends Ssf {
             }
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//            if (svar == 0 && lvar != 0) {
+//                y.add(1, x.get(0));
+//            } else if (svar != 0 && lvar == 0) {
+//                y.add(0, x.get(0));
+//            } else
+//            y.add(x);
+//        }
+//
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.set(0, 0, 1);

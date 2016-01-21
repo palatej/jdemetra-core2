@@ -204,7 +204,7 @@ public class SsfUcarimaTest {
     public void testAKF() {
         AugmentedFilter akf = new AugmentedFilter(true);
         AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
-        pe.prepare(ssf, ssfData.getCount());
+        pe.prepare(ssf, ssfData.getLength());
         akf.process(ssf, ssfData, pe);
         assertTrue(akf.getState().P().minus(P).nrm2() < 1e-6);
         assertTrue(akf.getState().a().distance(A) < 1e-6);
@@ -217,7 +217,7 @@ public class SsfUcarimaTest {
         for (int i = 0; i < N; ++i) {
             AugmentedFilter akf = new AugmentedFilter(true);
             AugmentedPredictionErrorDecomposition pe = new AugmentedPredictionErrorDecomposition(false);
-            pe.prepare(ssf, ssfData.getCount());
+            pe.prepare(ssf, ssfData.getLength());
             akf.process(ssf, ssfData, pe);
         }
         long t1 = System.currentTimeMillis();

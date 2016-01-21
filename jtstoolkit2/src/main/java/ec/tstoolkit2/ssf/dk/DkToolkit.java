@@ -63,7 +63,7 @@ public class DkToolkit {
     public static DefaultDiffuseFilteringResults filter(ISsf ssf, ISsfData data, boolean all) {
         DefaultDiffuseFilteringResults frslts = all
                 ? DefaultDiffuseFilteringResults.full() : DefaultDiffuseFilteringResults.light();
-        frslts.prepare(ssf, 0, data.getCount());
+        frslts.prepare(ssf, 0, data.getLength());
         DurbinKoopmanInitializer initializer = new DurbinKoopmanInitializer(frslts);
         OrdinaryFilter filter = new OrdinaryFilter(initializer);
         filter.process(ssf, data, frslts);
@@ -73,7 +73,7 @@ public class DkToolkit {
     public static DefaultDiffuseSquareRootFilteringResults sqrtFilter(ISsf ssf, ISsfData data, boolean all) {
         DefaultDiffuseSquareRootFilteringResults frslts = all
                 ? DefaultDiffuseSquareRootFilteringResults.full() : DefaultDiffuseSquareRootFilteringResults.light();
-        frslts.prepare(ssf, 0, data.getCount());
+        frslts.prepare(ssf, 0, data.getLength());
         DiffuseSquareRootInitializer initializer = new DiffuseSquareRootInitializer(frslts);
         OrdinaryFilter filter = new OrdinaryFilter(initializer);
         filter.process(ssf, data, frslts);
@@ -85,10 +85,10 @@ public class DkToolkit {
         smoother.setCalcVariances(all);
         DefaultSmoothingResults sresults = all ? DefaultSmoothingResults.full()
                 : DefaultSmoothingResults.light();
-        sresults.prepare(ssf, 0, data.getCount());
+        sresults.prepare(ssf, 0, data.getLength());
         if (smoother.process(ssf, data, sresults)) {
             if (all) {
-                sresults.rescaleVariances(var(data.getCount(), smoother.getFilteringResults()));
+                sresults.rescaleVariances(var(data.getLength(), smoother.getFilteringResults()));
             }
             return sresults;
         } else {
@@ -106,10 +106,10 @@ public class DkToolkit {
         smoother.setCalcVariances(all);
         DefaultSmoothingResults sresults = all ? DefaultSmoothingResults.full()
                 : DefaultSmoothingResults.light();
-        sresults.prepare(ssf, 0, data.getCount());
+        sresults.prepare(ssf, 0, data.getLength());
         if (smoother.process(ssf, data, sresults)) {
             if (all) {
-                sresults.rescaleVariances(var(data.getCount(), smoother.getFilteringResults()));
+                sresults.rescaleVariances(var(data.getLength(), smoother.getFilteringResults()));
             }
             return sresults;
         } else {
@@ -130,7 +130,7 @@ public class DkToolkit {
             
             DiffusePredictionErrorDecomposition pe = new DiffusePredictionErrorDecomposition(res);
             if (res) {
-                pe.prepare(ssf, data.getCount());
+                pe.prepare(ssf, data.getLength());
             }
             DurbinKoopmanInitializer initializer = new DurbinKoopmanInitializer(pe);
             OrdinaryFilter filter = new OrdinaryFilter(initializer);
@@ -153,7 +153,7 @@ public class DkToolkit {
             
             DiffusePredictionErrorDecomposition pe = new DiffusePredictionErrorDecomposition(res);
             if (res) {
-                pe.prepare(ssf, data.getCount());
+                pe.prepare(ssf, data.getLength());
             }
             DiffuseSquareRootInitializer initializer = new DiffuseSquareRootInitializer(pe);
             OrdinaryFilter filter = new OrdinaryFilter(initializer);

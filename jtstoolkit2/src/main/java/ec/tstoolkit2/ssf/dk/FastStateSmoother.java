@@ -42,7 +42,7 @@ public class FastStateSmoother {
     public DataBlockStorage process(ISsf ssf, ISsfData data) {
         initSsf(ssf);
         int dim = dynamics.getStateDim();
-        int n = data.getCount();
+        int n = data.getLength();
         DataBlockStorage storage = new DataBlockStorage(dim, n);
         DefaultDisturbanceSmoothingResults srslts = DefaultDisturbanceSmoothingResults.light(measurement.hasErrors());
         srslts.prepare(ssf, 0, n);

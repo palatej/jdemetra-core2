@@ -79,7 +79,7 @@ public class DiffuseSquareRootInitializer implements OrdinaryFilter.Initializer 
         dynamics = ssf.getDynamics();
         this.data = data;
         pos = 0;
-        int end = data.getCount();
+        int end = data.getLength();
         if (!initState()) {
             return -1;
         }

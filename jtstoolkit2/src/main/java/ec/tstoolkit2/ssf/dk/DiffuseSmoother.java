@@ -26,7 +26,7 @@ public class DiffuseSmoother extends BaseDiffuseSmoother{
 
     public boolean process(final ISsf ssf, final ISsfData data, ISmoothingResults sresults) {
         IDiffuseFilteringResults fresults = DkToolkit.filter(ssf, data, true);
-        return process(ssf, data.getCount(), fresults, sresults);
+        return process(ssf, data.getLength(), fresults, sresults);
     }
 
     public boolean process(ISsf ssf, final int endpos, IDiffuseFilteringResults results, ISmoothingResults sresults) {

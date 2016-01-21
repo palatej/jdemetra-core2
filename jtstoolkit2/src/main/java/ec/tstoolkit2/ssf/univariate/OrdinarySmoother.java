@@ -56,7 +56,7 @@ public class OrdinarySmoother {
         if (!filter.process(ssf, data, fresults)) {
             return false;
         }
-        return process(ssf, 0, data.getCount(), fresults);
+        return process(ssf, 0, data.getLength(), fresults);
     }
 
     public boolean process(ISsf ssf, DefaultFilteringResults results) {

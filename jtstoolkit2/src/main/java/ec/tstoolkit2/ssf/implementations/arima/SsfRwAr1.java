@@ -130,6 +130,11 @@ public class SsfRwAr1 extends Ssf {
             sm.set(1, 0, 1);
         }
 
+//        @Override
+//        public void addSX(int pos, DataBlock x, DataBlock y) {
+//             y.add(1, x.get(0));
+//        }
+//        
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.set(0, 0, 1);
