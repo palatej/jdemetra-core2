@@ -140,7 +140,7 @@ public class DiffuseDisturbanceSmoother {
                     esmVariance = Double.NaN;
                 }
             }
-            // v(U) = Q-S'NS
+            // v(U) = Q-QS'NSQ
             UVar.copy(Q);
             Matrix V = SymmetricMatrix.quadraticForm(N, SQ);
             UVar.sub(V);

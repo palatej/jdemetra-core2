@@ -411,14 +411,15 @@ public class DiffuseSimulationSmoother {
         private final double[] simulatedData;
 
         private void generateData() {
+            double std = Math.sqrt(var);
             DataBlock a0f = new DataBlock(dim);
             generateInitialState(a0f);
+            a0f.mul(std);
             DataBlock a = new DataBlock(dim);
             dynamics.a0(a, StateInfo.Forecast);
             a.add(a0f);
             states.save(0, a);
             simulatedData[0] = measurement.ZX(0, a);
-            double std = Math.sqrt(var);
             if (measurementErrors != null) {
                 simulatedData[0] += measurementErrors[0] * std;
             }

@@ -10,6 +10,7 @@ import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockStorage;
 import ec.tstoolkit.data.DescriptiveStatistics;
 import ec.tstoolkit.maths.matrices.Matrix;
+import ec.tstoolkit2.ssf.univariate.DefaultSmoothingResults;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -19,14 +20,14 @@ import org.junit.Test;
  */
 public class DiffuseSimulationSmootherTest {
 
-    final static int N = 50000;
+    final static int N = 10000;
 
     public DiffuseSimulationSmootherTest() {
     }
 
     @Test
     public void testGenerate() {
-        DiffuseSimulationSmoother smoother = new DiffuseSimulationSmoother(Models.ssfUcarima, Models.ssfXRandom);
+        DiffuseSimulationSmoother smoother = new DiffuseSimulationSmoother(Models.ssfUcarima, Models.ssfX);
         DiffuseSimulationSmoother.Simulation simul = smoother.newSimulation();
         simul.getSimulatedStates();
 //        System.out.println(DkToolkit.smooth(Models.ssfUcarima, Models.ssfXRandom, false).getComponent(0));
@@ -38,27 +39,32 @@ public class DiffuseSimulationSmootherTest {
     @Test
     //@Ignore
     public void stressTestGenerate() {
+        int CMP=0;
         long t0 = System.currentTimeMillis();
-        DiffuseSimulationSmoother smoother = new DiffuseSimulationSmoother(Models.ssfUcarima, Models.ssfProd);
-        Matrix all = new Matrix(Models.ssfProd.getLength(), N);
+        DiffuseSimulationSmoother smoother = new DiffuseSimulationSmoother(Models.ssfUcarima, Models.ssfX);
+        Matrix all = new Matrix(Models.ssfX.getLength(), N);
         for (int i = 0; i < N; ++i) {
             DiffuseSimulationSmoother.Simulation simul = smoother.newSimulation();
             DataBlockStorage simulatedStates = simul.getSimulatedStates();
-            all.column(i).copy(simulatedStates.item(0));
+            all.column(i).copy(simulatedStates.item(CMP));
         }
         long t1 = System.currentTimeMillis();
         System.out.println(t1 - t0);
         DataBlock M = new DataBlock(all.getRowsCount());
         DataBlock E = new DataBlock(all.getRowsCount());
-        for (int i=0; i<all.getRowsCount(); ++i){
-            DescriptiveStatistics stats=new DescriptiveStatistics(all.row(i));
+        for (int i = 0; i < all.getRowsCount(); ++i) {
+            DescriptiveStatistics stats = new DescriptiveStatistics(all.row(i));
             M.set(i, stats.getAverage());
             E.set(i, stats.getStdev());
         }
+        DefaultSmoothingResults sr = DkToolkit.sqrtSmooth(Models.ssfUcarima, Models.ssfX, true);
+        System.out.println(sr.getComponent(CMP));
         System.out.println(M);
         System.out.println(E);
-        System.out.println(smoother.getReferenceSmoothing().smoothedStates.item(0));
-//        t0 = System.currentTimeMillis();
+        DataBlock e = sr.getComponentVariance(CMP).deepClone();
+        e.sqrt();
+        System.out.println(e);
+        //         t0 = System.currentTimeMillis();
 //        for (int i = 0; i < N; ++i) {
 //            DkToolkit.smooth(Models.ssfUcarima, Models.ssfXRandom, false).getComponent(0);
 //        }
