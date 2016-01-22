@@ -19,6 +19,7 @@ package ec.tstoolkit2.ssf.dk;
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockStorage;
 import ec.tstoolkit.data.DescriptiveStatistics;
+import ec.tstoolkit.data.ReadDataBlock;
 import ec.tstoolkit.dstats.Normal;
 import ec.tstoolkit.maths.matrices.LowerTriangularMatrix;
 import ec.tstoolkit.maths.matrices.Matrix;
@@ -26,6 +27,7 @@ import ec.tstoolkit.maths.matrices.SymmetricMatrix;
 import ec.tstoolkit.random.IRandomNumberGenerator;
 import ec.tstoolkit.random.XorshiftRNG;
 import ec.tstoolkit2.ssf.ISsfDynamics;
+import ec.tstoolkit2.ssf.ResultsRange;
 import ec.tstoolkit2.ssf.StateInfo;
 import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.ISsfData;
@@ -64,6 +66,7 @@ public class DiffuseSimulationSmoother {
     private final ISsfDynamics dynamics;
     private final ISsfMeasurement measurement;
     private final Smoothing smoothing;
+    private final double var;
 
     public DiffuseSimulationSmoother(ISsf ssf, ISsfData data) {
         this.ssf = ssf;
@@ -72,6 +75,7 @@ public class DiffuseSimulationSmoother {
         this.data = data;
         initSsf();
         smoothing = new Smoothing();
+        var = DkToolkit.var(data.getLength(), smoothing.frslts);
     }
 
     public Smoothing getReferenceSmoothing() {
@@ -225,6 +229,7 @@ public class DiffuseSimulationSmoother {
             // we reproduce here the usual iterations of the smoother
             doNormalSmoothing();
             doDiffuseSmoohing();
+//            smoothedInnovations.rescale(Math.sqrt(var));
             computeInitialState();
         }
 
@@ -268,7 +273,7 @@ public class DiffuseSimulationSmoother {
             int pos = nd;
             while (--pos >= 0) {
                 // Get info
-                e = frslts.error(pos);
+                e = getError(pos);
                 f = frslts.errorVariance(pos);
                 fi = frslts.diffuseNorm2(pos);
                 C.copy(frslts.M(pos));
@@ -379,9 +384,9 @@ public class DiffuseSimulationSmoother {
 
     }
 
-    public class Simulation extends BaseSimulation{
-        
-        public Simulation(){
+    public class Simulation extends BaseSimulation {
+
+        public Simulation() {
             super(smoothing.frslts);
             boolean err = measurement.hasErrors();
             states = new DataBlockStorage(dim, n);
@@ -394,38 +399,50 @@ public class DiffuseSimulationSmoother {
             }
             simulatedData = new double[n];
             generateData();
+            filter();
             smooth();
         }
 
         final DataBlockStorage states;
+        private DataBlockStorage simulatedStates, simulatedInnovations;
         final DataBlockStorage transitionInnovations;
         final double[] measurementErrors;
+        private double[] ferrors;
         private final double[] simulatedData;
 
         private void generateData() {
-            DataBlock a0f = new DataBlock(dynamics.getStateDim());
+            DataBlock a0f = new DataBlock(dim);
             generateInitialState(a0f);
-            DataBlock cur = states.block(0);
-            dynamics.a0(cur, StateInfo.Forecast);
-            cur.add(a0f);
-            simulatedData[0] = measurement.ZX(0, cur);
+            DataBlock a = new DataBlock(dim);
+            dynamics.a0(a, StateInfo.Forecast);
+            a.add(a0f);
+            states.save(0, a);
+            simulatedData[0] = measurement.ZX(0, a);
+            double std = Math.sqrt(var);
             if (measurementErrors != null) {
-                simulatedData[0] += measurementErrors[0];
+                simulatedData[0] += measurementErrors[0] * std;
             }
             // a0 = a(1|0) -> y[1) = Z*a[1|0) + e(1)
             // a(2|1) = T a(1|0) + S * q(1)...
+            DataBlock q = new DataBlock(resdim);
             for (int i = 1; i < simulatedData.length; ++i) {
-                DataBlock q = transitionInnovations.block(i - 1);
                 generateTransitionRandoms(i - 1, q);
-                DataBlock prev = cur;
-                cur = states.block(i);
-                cur.copy(prev);
-                cur.addProduct(S(i).rows(), q);
-                simulatedData[i] = measurement.ZX(i, cur);
+                q.mul(std);
+                transitionInnovations.save(i - 1, q);
+                dynamics.TX(i, a);
+                a.addProduct(S(i).rows(), q);
+                states.save(i, a);
+                simulatedData[i] = measurement.ZX(i, a);
                 if (measurementErrors != null) {
-                    simulatedData[i] += measurementErrors[i];
+                    simulatedData[i] += measurementErrors[i] * std;
                 }
             }
+        }
+
+        private void filter() {
+            FastDiffuseFilter f = new FastDiffuseFilter(ssf, frslts, new ResultsRange(0, n));
+            ferrors = simulatedData.clone();
+            f.filter(new DataBlock(ferrors));
         }
 
         /**
@@ -434,10 +451,56 @@ public class DiffuseSimulationSmoother {
         public double[] getSimulatedData() {
             return simulatedData;
         }
+        
+        public DataBlockStorage getGeneratedStates(){
+            return states;
+        }
 
         @Override
         protected double getError(int pos) {
-            return simulatedData[pos]-measurement.ZX(pos, states.block(pos));
+            return ferrors[pos];
+        }
+
+        public ReadDataBlock getErrors() {
+            return new ReadDataBlock(ferrors);
+        }
+        
+        public DataBlockStorage getSimulatedStates(){
+            if (simulatedStates == null)
+                computeSimulatedStates();
+            return simulatedStates;
+        }
+
+        private void computeSimulatedStates() {
+            simulatedStates=new DataBlockStorage(dim, n);
+            DataBlockStorage sm = smoothing.getSmoothedStates();
+            DataBlockStorage ssm = getSmoothedStates();
+            DataBlock a=new DataBlock(dim);
+            for (int i=0; i<n; ++i){
+                a.copy(sm.block(i));
+                a.sub(ssm.block(i));
+                a.add(states.block(i));
+                simulatedStates.save(i, a);
+            }
+        }
+
+        public DataBlockStorage getSimulatedInnovations(){
+            if (simulatedInnovations == null)
+                computeSimulatedInnovations();
+            return simulatedInnovations;
+        }
+
+        private void computeSimulatedInnovations() {
+            simulatedInnovations=new DataBlockStorage(resdim, n);
+            DataBlockStorage sm = smoothing.getSmoothedInnovations();
+            DataBlockStorage ssm = getSmoothedInnovations();
+            DataBlock u=new DataBlock(dim);
+            for (int i=0; i<n; ++i){
+                u.copy(sm.block(i));
+                u.sub(ssm.block(i));
+                u.add(transitionInnovations.block(i));
+                simulatedInnovations.save(i, u);
+            }
         }
     }
 }
