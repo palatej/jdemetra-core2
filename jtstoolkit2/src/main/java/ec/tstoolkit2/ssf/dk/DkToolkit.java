@@ -16,23 +16,16 @@
  */
 package ec.tstoolkit2.ssf.dk;
 
-import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.DataBlockStorage;
 import ec.tstoolkit2.ssf.dk.sqrt.DiffuseSquareRootInitializer;
 import ec.tstoolkit.eco.ILikelihood;
-import ec.tstoolkit.maths.matrices.Matrix;
 import ec.tstoolkit.maths.realfunctions.IParametricMapping;
-import ec.tstoolkit2.ssf.ISsfDynamics;
-import ec.tstoolkit2.ssf.StateInfo;
 import ec.tstoolkit2.ssf.dk.sqrt.DefaultDiffuseSquareRootFilteringResults;
 import ec.tstoolkit2.ssf.dk.sqrt.DiffuseSquareRootSmoother;
-import ec.tstoolkit2.ssf.univariate.DefaultDisturbanceSmoothingResults;
 import ec.tstoolkit2.ssf.univariate.DefaultSmoothingResults;
-import ec.tstoolkit2.ssf.univariate.IFilteringResults;
 import ec.tstoolkit2.ssf.univariate.ILikelihoodComputer;
 import ec.tstoolkit2.ssf.univariate.ISsf;
 import ec.tstoolkit2.ssf.univariate.ISsfData;
-import ec.tstoolkit2.ssf.univariate.ISsfMeasurement;
 import ec.tstoolkit2.ssf.univariate.OrdinaryFilter;
 
 /**

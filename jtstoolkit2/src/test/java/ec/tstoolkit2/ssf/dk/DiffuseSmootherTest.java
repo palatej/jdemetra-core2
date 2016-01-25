@@ -102,7 +102,7 @@ public class DiffuseSmootherTest {
     }
 
     @Test
-    @Ignore
+    //@Ignore
     public void stressTestSmoothing() {
         int K=5000;
         long t0 = System.currentTimeMillis();

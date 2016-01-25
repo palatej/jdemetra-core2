@@ -72,7 +72,7 @@ public class SsfBsmTest {
         spec.useSlope(ec.tstoolkit.structural.ComponentUse.Free);
         spec.useCycle(ec.tstoolkit.structural.ComponentUse.Free);
         spec.useNoise(ec.tstoolkit.structural.ComponentUse.Free);
-        spec.setSeasonalModel(ec.tstoolkit.structural.SeasonalModel.Trigonometric);
+        spec.setSeasonalModel(ec.tstoolkit.structural.SeasonalModel.Crude);
 
         ec.tstoolkit.structural.BasicStructuralModel omodel = new ec.tstoolkit.structural.BasicStructuralModel(spec, 12);
         omodel.setCycle(.9, 8);
@@ -105,7 +105,7 @@ public class SsfBsmTest {
         spec.useSlope(ComponentUse.Free);
         spec.useCycle(ComponentUse.Free);
         spec.useNoise(ComponentUse.Free);
-        spec.setSeasonalModel(SeasonalModel.Trigonometric);
+        spec.setSeasonalModel(SeasonalModel.Crude);
 
         model = new BasicStructuralModel(spec, 12);
         model.setCycle(.9, 8);
@@ -150,6 +150,40 @@ public class SsfBsmTest {
         dyn.Pi0(Pi0.subMatrix());
         dyn.diffuseConstraints(B.subMatrix());
         assertTrue(Pi0.minus(SymmetricMatrix.XXt(B)).nrm2() < 1e-9);
+
+        Matrix S = new Matrix(dyn.getStateDim(), dyn.getInnovationsDim());
+        dyn.S(0, S.subMatrix());
+        Matrix V = Matrix.square(dyn.getStateDim());
+        dyn.V(0, V.subMatrix());
+        Matrix SS = SymmetricMatrix.XXt(S);
+        System.out.println(V);
+        System.out.println(SS);
+        assertTrue(V.distance(SS) < 1e-8);
+    }
+
+    @Test
+    public void testInnovations() {
+        ModelSpecification nspec = model.getSpecification().clone();
+
+        SeasonalModel[] models = SeasonalModel.values();
+
+        for (int i = 0; i < models.length; ++i) {
+            nspec.setSeasonalModel(models[i]);
+            SsfBsm bsm = SsfBsm.create(new BasicStructuralModel(nspec, 12));
+            ISsfDynamics dyn = bsm.getDynamics();
+            Matrix S = new Matrix(dyn.getStateDim(), dyn.getInnovationsDim());
+            dyn.S(0, S.subMatrix());
+            DataBlock x = new DataBlock(dyn.getStateDim()), u = new DataBlock(dyn.getInnovationsDim());
+            DataBlock uc = new DataBlock(dyn.getInnovationsDim());
+            x.randomize();
+            DataBlock xc = x.deepClone();
+            uc.product(x, S.columns());
+            dyn.XS(0, x, u);
+            assertTrue(u.distance(uc) < 1e-9);
+            xc.addProduct(S.rows(), uc);
+            dyn.addSU(0, x, u);
+            assertTrue(x.distance(xc) < 1e-9);
+        }
     }
 
     @Test
@@ -184,10 +218,10 @@ public class SsfBsmTest {
         Ssf ssf = SsfBsm.create(model);
         SsfData ssfData = new SsfData(data);
         DkDiffuseLikelihood ll = (DkDiffuseLikelihood) DkToolkit.likelihoodComputer(false, false).compute(ssf, ssfData);
-        assertTrue(Math.abs(ll.getSsqErr()-OldLL.getSsqErr())<1e-6);
+        assertTrue(Math.abs(ll.getSsqErr() - OldLL.getSsqErr()) < 1e-6);
         Ssf ssf2 = SsfBsm2.create(model);
         DkDiffuseLikelihood ll2 = (DkDiffuseLikelihood) DkToolkit.likelihoodComputer(true, false).compute(ssf2, ssfData);
-        assertTrue(Math.abs(ll2.getSsqErr()-OldLL.getSsqErr())<1e-6);
+        assertTrue(Math.abs(ll2.getSsqErr() - OldLL.getSsqErr()) < 1e-6);
         AkfDiffuseLikelihood ll3 = (AkfDiffuseLikelihood) AkfToolkit.likelihoodComputer(true).compute(ssf, ssfData);
         AkfDiffuseLikelihood ll4 = (AkfDiffuseLikelihood) AkfToolkit.likelihoodComputer(false).compute(ssf, ssfData);
         assertEquals(ll.getLogLikelihood(), ll2.getLogLikelihood(), 1e-8);
@@ -200,8 +234,8 @@ public class SsfBsmTest {
         Ssf ssf = SsfBsm.create(model);
         SsfData ssfData = new SsfData(data);
         AkfDiffuseLikelihood ll = (AkfDiffuseLikelihood) AkfToolkit.likelihoodComputer(true).compute(ssf, ssfData);
-        assertTrue(Math.abs(ll.getSsqErr()-OldLL.getSsqErr())<1e-6);
-        assertTrue(Math.abs(ll.getLogDeterminant()+ll.getDiffuseCorrection()-OldLL.getLogDeterminant()-OldLL.getDiffuseLogDeterminant())<1e-6);
+        assertTrue(Math.abs(ll.getSsqErr() - OldLL.getSsqErr()) < 1e-6);
+        assertTrue(Math.abs(ll.getLogDeterminant() + ll.getDiffuseCorrection() - OldLL.getLogDeterminant() - OldLL.getDiffuseLogDeterminant()) < 1e-6);
     }
 
     @Test

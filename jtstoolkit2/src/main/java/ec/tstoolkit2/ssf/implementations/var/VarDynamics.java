@@ -141,7 +141,6 @@ public class VarDynamics implements ISsfDynamics {
 //
     @Override
     public void S(int pos, SubMatrix sm) {
-        // TODO
         for (int i = 0, r = 0; i < neq; ++i, r += nlx) {
             sm.set(r, i, 1);
         }

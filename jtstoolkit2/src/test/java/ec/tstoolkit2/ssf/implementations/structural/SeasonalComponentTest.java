@@ -18,6 +18,8 @@
  */
 package ec.tstoolkit2.ssf.implementations.structural;
 
+import ec.tstoolkit.maths.matrices.Matrix;
+import ec.tstoolkit.maths.matrices.SymmetricMatrix;
 import ec.tstoolkit2.ssf.dk.DkDiffuseLikelihood;
 import ec.tstoolkit2.ssf.dk.DkToolkit;
 import ec.tstoolkit2.ssf.implementations.CompositeDynamics;
@@ -102,7 +104,7 @@ public class SeasonalComponentTest {
         t0 = System.currentTimeMillis();
         for (int i = 0; i < N; ++i) {
             DkDiffuseLikelihood ll = (DkDiffuseLikelihood) DkToolkit.likelihoodComputer().compute(ssf2, ssfData);
-            l=ll.getLogLikelihood();
+            l = ll.getLogLikelihood();
         }
         t1 = System.currentTimeMillis();
         System.out.println("Bsm2");
@@ -111,11 +113,18 @@ public class SeasonalComponentTest {
         t0 = System.currentTimeMillis();
         for (int i = 0; i < N; ++i) {
             DkDiffuseLikelihood ll = (DkDiffuseLikelihood) DkToolkit.likelihoodComputer().compute(ssf3, ssfData);
-            l=ll.getLogLikelihood();
+            l = ll.getLogLikelihood();
         }
         t1 = System.currentTimeMillis();
         System.out.println("composite");
         System.out.println(t1 - t0);
         System.out.println(l);
+    }
+
+    @Test
+    public void testDecomposeHS() {
+        Matrix V = SsfBsm.tsVar(SeasonalModel.Trigonometric, 12);
+        SymmetricMatrix.lcholesky(V, 1e-9);
+        System.out.println(V);
     }
 }

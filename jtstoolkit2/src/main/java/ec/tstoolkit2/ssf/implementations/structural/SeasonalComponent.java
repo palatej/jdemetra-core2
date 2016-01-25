@@ -32,8 +32,8 @@ import ec.tstoolkit2.ssf.univariate.Ssf;
  * @author Jean Palate
  */
 public class SeasonalComponent {
-    
-    public static ISsf create(final SeasonalModel model, final double seasVar, final int period){
+
+    public static ISsf create(final SeasonalModel model, final double seasVar, final int period) {
         return new Ssf(new Dynamics(model, seasVar, period), Measurement.create(1));
     }
 
@@ -44,14 +44,13 @@ public class SeasonalComponent {
     public static ISsf harrisonStevens(final double[] var) {
         return new Ssf(new HarrisonStevensDynamics(var), Measurement.cyclical(var.length));
     }
-    
 
     static class Dynamics implements ISsfDynamics {
 
         private final SeasonalModel seasModel;
         private final double seasVar;
         private final int freq;
-        private final SubMatrix tsvar;
+        private final SubMatrix tsvar, lvar;
 
         public Dynamics(final SeasonalModel model, final double seasVar, final int freq) {
             this.seasVar = seasVar;
@@ -60,8 +59,23 @@ public class SeasonalComponent {
             if (seasVar > 0) {
                 tsvar = SsfBsm.tsVar(seasModel, freq).subMatrix();
                 tsvar.mul(seasVar);
+                if (model != SeasonalModel.Crude && model != SeasonalModel.Dummy) {
+                    lvar = SsfBsm.tslVar(seasModel, freq).subMatrix();
+                    lvar.mul(std());
+                } else {
+                    lvar = null;
+                }
             } else {
                 tsvar = null;
+                lvar = null;
+            }
+        }
+
+        private double std() {
+            if (seasVar == 0 || seasVar == 1) {
+                return seasVar;
+            } else {
+                return Math.sqrt(seasVar);
             }
         }
 
@@ -83,8 +97,7 @@ public class SeasonalComponent {
         @Override
         public int getInnovationsDim() {
             if (seasVar > 0) {
-                if (seasModel == SeasonalModel.Dummy) {
-//                    || seasModel == SeasonalModel.Crude) {
+                if (seasModel == SeasonalModel.Dummy || seasModel == SeasonalModel.Crude) {
                     return 1;
                 } else {
                     return freq - 1;
@@ -110,27 +123,37 @@ public class SeasonalComponent {
             return true;
         }
 
-//        @Override
-//        public void Q(int pos, SubMatrix q) {
-//            V(pos, q);
-//        }
-//
-//        @Override
-//        public void S(int pos, SubMatrix sm) {
-//        }
         @Override
         public void S(int pos, SubMatrix s) {
-            //TODO
+            if (seasModel == SeasonalModel.Crude) {
+                s.set(std());
+            } else if (seasModel == SeasonalModel.Dummy) {
+                s.set(freq - 1, 0, std());
+            } else {
+                s.copy(lvar);
+            }
         }
 
         @Override
         public void addSU(int pos, DataBlock x, DataBlock u) {
-            //TODO
+            if (seasModel == SeasonalModel.Crude) {
+                x.add(std() * u.get(0));
+            } else if (seasModel == SeasonalModel.Dummy) {
+                x.add(freq - 1, std() * u.get(0));
+            } else {
+                x.addProduct(lvar.rows(), u);
+            }
         }
-        
+
         @Override
         public void XS(int pos, DataBlock x, DataBlock xs) {
-            //TODO
+            if (seasModel == SeasonalModel.Crude) {
+                xs.set(0, std()*x.sum());
+            } else if (seasModel == SeasonalModel.Dummy) {
+                xs.set(0, std()*x.get(freq-1));
+            } else {
+                xs.product(x, lvar.columns());
+            }
         }
 
 //        @Override
@@ -207,7 +230,6 @@ public class SeasonalComponent {
         }
 
     }
-
 
     public static class HarrisonStevensDynamics implements ISsfDynamics {
 
@@ -291,7 +313,7 @@ public class SeasonalComponent {
         public void addSU(int pos, DataBlock x, DataBlock u) {
             //TODO
         }
-        
+
         @Override
         public void XS(int pos, DataBlock x, DataBlock xs) {
             //TODO
@@ -301,7 +323,8 @@ public class SeasonalComponent {
 //            y.add(x);
 //        }
 //
-       @Override
+
+        @Override
         public void T(int pos, SubMatrix tr) {
             tr.diagonal().set(1);
         }

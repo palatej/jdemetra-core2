@@ -81,7 +81,7 @@ public class SsfBsm2 extends Ssf {
 
     public static class Bsm2Dynamics implements ISsfDynamics {
 
-        private final SubMatrix tsvar;
+        private final SubMatrix tsvar, ltsvar;
         private final double lVar, sVar, seasVar, cVar, cDump;
         private final double ccos, csin;
         private final int freq;
@@ -100,8 +100,15 @@ public class SsfBsm2 extends Ssf {
             if (seasVar > 0) {
                 tsvar = SsfBsm.tsVar(seasModel, freq).subMatrix();
                 tsvar.mul(seasVar);
+                if (model.seasModel != SeasonalModel.Crude && model.seasModel != SeasonalModel.Dummy) {
+                    ltsvar = SsfBsm.tslVar(seasModel, freq).subMatrix();
+                    ltsvar.mul(Math.sqrt(seasVar));
+                } else {
+                    ltsvar = null;
+                }
             } else {
                 tsvar = null;
+                ltsvar = null;
             }
         }
 
@@ -140,8 +147,7 @@ public class SsfBsm2 extends Ssf {
         public int getInnovationsDim() {
             int nr = 0;
             if (seasVar > 0) {
-                if (seasModel == SeasonalModel.Dummy) {
-//                    || seasModel == SeasonalModel.Crude) {
+                if (seasModel == SeasonalModel.Dummy || seasModel == SeasonalModel.Crude) {
                     ++nr;
                 } else {
                     nr += freq - 1;
@@ -194,26 +200,100 @@ public class SsfBsm2 extends Ssf {
             return true;
         }
 
-//        @Override
+        @Override
         public void S(int pos, SubMatrix s) {
-            //TODO
+            int i = 0, j = 0;
+            if (cVar > 0) {
+                double ce = Math.sqrt(cVar);
+                s.set(i++, j++, ce);
+                s.set(i++, j++, ce);
+            } else if (cVar == 0) {
+                i += 2;
+            }
+            if (lVar > 0) {
+                s.set(i++, j++, Math.sqrt(lVar));
+            } else if (lVar == 0) {
+                ++i;
+            }
+            if (sVar > 0) {
+                s.set(i++, j++, Math.sqrt(sVar));
+            } else if (sVar == 0) {
+                ++i;
+            }
+            if (seasVar > 0) {
+                if (seasModel == SeasonalModel.Dummy) {
+                    s.set(i, j, Math.sqrt(seasVar));
+                } else if (seasModel == SeasonalModel.Crude) {
+                    s.extract(i, i + freq - 1, j, j + 1).set(Math.sqrt(seasVar));
+
+                } else {
+                    s.extract(i, i + freq - 1, j, j + freq - 1).copy(ltsvar);
+                }
+            }
         }
 
         @Override
         public void addSU(int pos, DataBlock x, DataBlock u) {
-            //TODO
-        }
-        
-        @Override
-        public void XS(int pos, DataBlock x, DataBlock xs) {
-            //TODO
+            int i = 0, j = 0;
+            if (cVar > 0) {
+                double ce = Math.sqrt(cVar);
+                x.add(i++, u.get(j++) * ce);
+                x.add(i++, u.get(j++) * ce);
+            } else if (cVar == 0) {
+                i += 2;
+            }
+            if (lVar > 0) {
+                x.add(i++, u.get(j++) * Math.sqrt(lVar));
+            } else if (lVar == 0) {
+                ++i;
+            }
+            if (sVar > 0) {
+                x.add(i++, u.get(j++) * Math.sqrt(sVar));
+            } else if (sVar == 0) {
+                ++i;
+            }
+            if (seasVar > 0) {
+                if (seasModel == SeasonalModel.Dummy) {
+                    x.add(i, u.get(j) * Math.sqrt(seasVar));
+                } else if (seasModel == SeasonalModel.Crude) {
+                    x.range(i, i + freq - 1).add(Math.sqrt(seasVar) * u.get(j));
+                } else {
+                    x.range(i, i + freq - 1).addProduct(ltsvar.rows(), u.range(j, j + freq - 1));
+                }
+            }
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//             y.add(x);
-//        }
-//        
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            int i = 0, j = 0;
+            if (cVar > 0) {
+                double ce = Math.sqrt(cVar);
+                xs.set(j++, x.get(i++) * ce);
+                xs.set(j++, x.get(i++) * ce);
+            } else if (cVar == 0) {
+                i += 2;
+            }
+            if (lVar > 0) {
+                xs.set(j++, x.get(i++) * Math.sqrt(lVar));
+            } else if (lVar == 0) {
+                ++i;
+            }
+            if (sVar > 0) {
+                xs.set(j++, x.get(i++) * Math.sqrt(lVar));
+            } else if (sVar == 0) {
+                ++i;
+            }
+            if (seasVar > 0) {
+                if (seasModel == SeasonalModel.Dummy) {
+                    xs.set(j, x.get(i) * Math.sqrt(seasVar));
+                } else if (seasModel == SeasonalModel.Crude) {
+                    xs.set(j, x.range(i, i + freq - 1).sum() * Math.sqrt(seasVar));
+                } else {
+                    xs.range(j, j + freq - 1).product(x.range(i, i + freq - 1), ltsvar.columns());
+                }
+            }
+        }
+
         @Override
         public void T(int pos, SubMatrix tr) {
             int i = 0;
