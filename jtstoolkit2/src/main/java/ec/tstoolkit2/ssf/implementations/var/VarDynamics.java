@@ -130,25 +130,31 @@ public class VarDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean hasS() {
-        return true;
-    }
-
-    @Override
     public boolean hasInnovations(int pos) {
         return true;
     }
 
-    @Override
-    public void Q(int pos, SubMatrix qm) {
-        qm.copy(desc.getInnovationsVariance().subMatrix());
-    }
-
+//    @Override
+//    public void Q(int pos, SubMatrix qm) {
+//        qm.copy(desc.getInnovationsVariance().subMatrix());
+//    }
+//
     @Override
     public void S(int pos, SubMatrix sm) {
+        // TODO
         for (int i = 0, r = 0; i < neq; ++i, r += nlx) {
             sm.set(r, i, 1);
         }
+    }
+
+    @Override
+    public void addSU(int pos, DataBlock x, DataBlock u) {
+        // TODO
+    }
+
+    @Override
+    public void XS(int pos, DataBlock x, DataBlock xs) {
+        // TODO
     }
 
 //    @Override

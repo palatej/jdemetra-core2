@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.implementations.arima;
 
@@ -29,25 +29,25 @@ import ec.tstoolkit2.ssf.univariate.Ssf;
  *
  * @author Jean Palate
  */
-public class SsfAr1 extends Ssf{
-    
-    public SsfAr1(final double rho, final double var, final boolean zeroinit){
-        super (new Dynamics(rho, var, zeroinit), Measurement.create(0));
+public class SsfAr1 extends Ssf {
+
+    public SsfAr1(final double rho, final double var, final boolean zeroinit) {
+        super(new Dynamics(rho, var, zeroinit), Measurement.create(0));
     }
-    
-    private Dynamics dynamics(){
+
+    private Dynamics dynamics() {
         return (Dynamics) this.dynamics;
     }
-    
-    public double getRho(){
+
+    public double getRho() {
         return dynamics().rho;
     }
 
-    public double getInnovationVariance(){
+    public double getInnovationVariance() {
         return dynamics().var;
     }
-    
-    public boolean isZeroInitialization(){
+
+    public boolean isZeroInitialization() {
         return dynamics().zeroinit;
     }
 
@@ -61,6 +61,10 @@ public class SsfAr1 extends Ssf{
             this.rho = rho;
             this.var = var;
             this.zeroinit = zeroinit;
+        }
+
+        private double std() {
+            return var == 1 ? 1 : Math.sqrt(var);
         }
 
         public boolean isZeroInit() {
@@ -101,29 +105,25 @@ public class SsfAr1 extends Ssf{
         }
 
         @Override
-        public boolean hasS() {
-            return false;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
         }
 
         @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.set(0, 0, var);
+        public void S(int pos, SubMatrix sm) {
+            sm.set(0, 0, std());
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            x.add(0, std() * u.get(0));
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//            y.add(x);
-//        }
-//
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            xs.set(0, std() * x.get(0));
+        }
+
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.set(0, 0, rho);
@@ -151,8 +151,9 @@ public class SsfAr1 extends Ssf{
         @Override
         public boolean Pf0(SubMatrix pf0, StateInfo info) {
             if (zeroinit) {
-                if (info == StateInfo.Forecast)
+                if (info == StateInfo.Forecast) {
                     pf0.set(0, 0, var);
+                }
             } else {
                 pf0.set(0, 0, var / (1 - rho * rho));
             }
@@ -161,17 +162,17 @@ public class SsfAr1 extends Ssf{
 
         @Override
         public void TX(int pos, DataBlock x) {
-            x.mul(0,rho);
+            x.mul(0, rho);
         }
 
         @Override
         public void TVT(int pos, SubMatrix v) {
-            v.mul(0, 0, rho*rho);
+            v.mul(0, 0, rho * rho);
         }
 
         @Override
         public void XT(int pos, DataBlock x) {
-            x.mul(0,rho);
+            x.mul(0, rho);
         }
 
         @Override

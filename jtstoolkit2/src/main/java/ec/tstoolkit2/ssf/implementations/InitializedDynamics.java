@@ -66,18 +66,8 @@ public final class InitializedDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean hasS() {
-        return dyn.hasS();
-    }
-
-    @Override
     public boolean hasInnovations(int pos) {
         return dyn.hasInnovations(pos + startpos);
-    }
-
-    @Override
-    public void Q(int pos, SubMatrix qm) {
-        dyn.Q(pos + startpos, qm);
     }
 
     @Override
@@ -85,11 +75,16 @@ public final class InitializedDynamics implements ISsfDynamics {
         dyn.S(pos + startpos, sm);
     }
 
-//    @Override
-//    public void addSX(int pos, DataBlock x, DataBlock y) {
-//        dyn.addSX(pos, x, y);
-//    }
-//
+    @Override
+    public void XS(int pos, DataBlock x, DataBlock sx) {
+        dyn.XS(pos+ startpos, x, sx);
+    }
+
+    @Override
+    public void addSU(int pos, DataBlock x, DataBlock u) {
+        dyn.addSU(pos+ startpos, x, u);
+    }
+
     @Override
     public void T(int pos, SubMatrix tr) {
         dyn.T(pos + startpos, tr);

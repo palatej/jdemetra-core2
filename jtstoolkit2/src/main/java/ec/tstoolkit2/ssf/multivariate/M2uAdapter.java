@@ -207,23 +207,11 @@ public class M2uAdapter {
         }
 
         @Override
-        public boolean hasS() {
-            return mdynamics.hasS();
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             if (pos % nstep == nstep - 1) {
                 return mdynamics.hasInnovations(pos / nstep);
             } else {
                 return false;
-            }
-        }
-
-        @Override
-        public void Q(int pos, SubMatrix qm) {
-            if (pos % nstep == nstep - 1) {
-                mdynamics.Q(pos / nstep, qm);
             }
         }
 
@@ -234,13 +222,20 @@ public class M2uAdapter {
             }
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//            if (pos % nstep == nstep - 1) {
-//                mdynamics.addSX(pos / nstep, x, y);
-//            }
-//        }
-//
+        @Override
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            if (pos % nstep == nstep - 1) {
+                mdynamics.addSU(pos / nstep, x, u);
+            }
+        }
+
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            if (pos % nstep == nstep - 1) {
+                mdynamics.XS(pos / nstep, x, xs);
+            }
+        }
+        
         @Override
         public void T(int pos, SubMatrix tr) {
             if (pos % nstep == nstep - 1) {

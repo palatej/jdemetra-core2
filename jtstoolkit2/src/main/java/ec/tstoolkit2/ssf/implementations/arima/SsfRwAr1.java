@@ -73,6 +73,10 @@ public class SsfRwAr1 extends Ssf {
             this.zeroinit = zeroinit;
         }
 
+        private double std() {
+            return var == 1 ? 1 : Math.sqrt(var);
+        }
+
         boolean isZeroInit() {
             return zeroinit;
         }
@@ -111,23 +115,23 @@ public class SsfRwAr1 extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return true;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
         }
 
-        @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.set(0, 0, var);
+       @Override
+        public void S(int pos, SubMatrix sm) {
+            sm.set(1, 0, std());
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
-            sm.set(1, 0, 1);
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            x.add(1, std() * u.get(0));
+        }
+
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            xs.set(0, std() * x.get(1));
         }
 
 //        @Override

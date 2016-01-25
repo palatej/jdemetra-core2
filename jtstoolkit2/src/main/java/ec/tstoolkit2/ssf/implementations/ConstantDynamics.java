@@ -60,17 +60,8 @@ public class ConstantDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean hasS() {
-        return false;
-    }
-
-    @Override
     public boolean hasInnovations(int pos) {
         return false;
-    }
-
-    @Override
-    public void Q(int pos, SubMatrix qm) {
     }
 
     @Override
@@ -119,6 +110,14 @@ public class ConstantDynamics implements ISsfDynamics {
 
     @Override
     public void TX(int pos, DataBlock x) {
+    }
+
+    @Override
+    public void XS(int pos, DataBlock x, DataBlock sx) {
+    }
+
+    @Override
+    public void addSU(int pos, DataBlock x, DataBlock sx) {
     }
 
     @Override

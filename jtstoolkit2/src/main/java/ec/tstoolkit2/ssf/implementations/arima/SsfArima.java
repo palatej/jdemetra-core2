@@ -339,18 +339,8 @@ public class SsfArima extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return true;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
-        }
-
-        @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.set(0, 0, var_);
         }
 
         @Override
@@ -359,26 +349,33 @@ public class SsfArima extends Ssf {
                 init();
             }
             sm.column(0).copyFrom(psi_, 0);
+            if (var_ != 1) {
+                sm.mul(Math.sqrt(var_));
+            }
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//            if (psi_ == null) {
-//                init();
-//            }
-//            y.addAY(x.get(0), new DataBlock(psi_));
-//        }
-//
         @Override
-        public void U(int pos, SubMatrix u) {
+        public void XS(int pos, DataBlock x, DataBlock xs) {
             if (psi_ == null) {
                 init();
             }
-            DataBlock U = u.column(0);
-            U.copyFrom(psi_, 0);
+            double a = x.dot(psi_);
             if (var_ != 1) {
-                U.mul(Math.sqrt(var_));
+                a *= Math.sqrt(var_);
             }
+            xs.set(0, a);
+        }
+
+        @Override
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            if (psi_ == null) {
+                init();
+            }
+            double a = u.get(0);
+            if (var_ != 1) {
+                a *= Math.sqrt(var_);
+            }
+            x.addAY(a, new DataBlock(psi_));
         }
 
         @Override
@@ -650,8 +647,11 @@ public class SsfArima extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return true;
+        public void S(int pos, SubMatrix sm) {
+            sm.column(0).copyFrom(psi_, 0);
+            if (var_ != 1) {
+                sm.mul(Math.sqrt(var_));
+            }
         }
 
         @Override
@@ -660,24 +660,28 @@ public class SsfArima extends Ssf {
         }
 
         @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.set(0, 0, var_);
-        }
-
-        @Override
-        public void S(int pos, SubMatrix sm) {
-            sm.column(0).copyFrom(psi_, 0);
-        }
-
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//             y.addAY(x.get(0), new DataBlock(psi_));
-//        }
-//        
-        @Override
         public void addV(int pos, SubMatrix p) {
             p.add(V.subMatrix());
         }
+        
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock sx) {
+            double a = x.dot(psi_);
+            if (var_ != 1) {
+                a *= Math.sqrt(var_);
+            }
+            sx.set(0, a);
+        }
+
+        @Override
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            double a = u.get(0);
+            if (var_ != 1) {
+                a *= Math.sqrt(var_);
+            }
+            x.addAY(a, new DataBlock(psi_));
+        }
+        
     }
 
     static class Mapping implements IParametricMapping<SsfArima> {

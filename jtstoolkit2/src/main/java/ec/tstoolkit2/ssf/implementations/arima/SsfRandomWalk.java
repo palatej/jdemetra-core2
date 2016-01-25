@@ -57,6 +57,10 @@ public class SsfRandomWalk extends Ssf {
             this.zeroinit = zeroinit;
         }
 
+        private double std() {
+            return var == 1 ? 1 : Math.sqrt(var);
+        }
+
         public boolean isZeroInit() {
             return zeroinit;
         }
@@ -91,29 +95,25 @@ public class SsfRandomWalk extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return false;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
         }
 
-        @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.set(0, 0, var);
-        }
-
-        @Override
+       @Override
         public void S(int pos, SubMatrix sm) {
+            sm.set(0, 0, std());
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//             y.add(x);
-//        }
-//        
+        @Override
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            x.add(0, std() * u.get(0));
+        }
+
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            xs.set(0, std() * x.get(0));
+        }
+
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.set(0, 0, 1);

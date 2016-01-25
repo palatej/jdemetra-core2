@@ -124,16 +124,6 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean hasS() {
-        for (int i = 0; i < dyn.length; ++i) {
-            if (dyn[i].hasS()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
     public boolean hasInnovations(int pos) {
         for (int i = 0; i < dyn.length; ++i) {
             if (dyn[i].hasInnovations(pos)) {
@@ -144,57 +134,50 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void Q(int pos, SubMatrix qm) {
-        SubMatrix cur = qm.topLeft();
-        for (int i = 0; i < dyn.length; ++i) {
-            int rdim = dyn[i].getInnovationsDim();
-            if (rdim > 0) {
-                cur.next(rdim, rdim);
-                dyn[i].Q(pos, cur);
-            }
-        }
-    }
-
-    @Override
     public void S(int pos, SubMatrix sm) {
         SubMatrix cur = sm.topLeft();
-        for (int i = 0, j = 0, k = 0; i < dyn.length; ++i) {
+        for (int i = 0; i < dyn.length; ++i) {
             int rcount = dim[i];
-            if (dyn[i].hasS()) {
-                int rdim = dyn[i].getInnovationsDim();
-                if (rdim > 0) {
-                    cur.next(rcount, rdim);
-                    dyn[i].S(pos, cur);
-                }
-            } else if (dyn[i].hasInnovations(pos)) {
-                cur.next(rcount, rcount);
-                cur.diagonal().set(1);
-            } else {
-                cur.next(rcount, 0);
+            int rdim = dyn[i].getInnovationsDim();
+            cur.next(rcount, rdim);
+            if (rdim > 0) {
+                dyn[i].S(pos, cur);
             }
-            j += rcount;
         }
     }
 
-//    @Override
-//    public void addSX(int pos, DataBlock x, DataBlock y) {
-//        DataBlock xcur = x.start(), ycur = y.start();
-//        for (int i = 0; i < dyn.length; ++i) {
-//            int rcount = dim[i];
-//            ycur.next(rcount);
-//            if (dyn[i].hasS()) {
-//                int rdim = dyn[i].getInnovationsDim();
-//                xcur.next(rdim);
-//                dyn[i].addSX(pos, xcur, ycur);
-//            } else if (dyn[i].hasInnovations(pos)) {
-//                xcur.next(rcount);
-//                ycur.add(xcur);
-//            } 
-//        }
-//    }
-//
     @Override
-    public void T(int pos, SubMatrix tr) {
+    public void addSU(int pos, DataBlock x, DataBlock u) {
+        DataBlock xcur = x.start(), ucur = u.start();
+        for (int i = 0; i < dyn.length; ++i) {
+            int rcount = dim[i];
+            int rdim = dyn[i].getInnovationsDim();
+            xcur.next(rcount);
+            if (rdim > 0) {
+                ucur.next(rdim);
+                dyn[i].addSU(pos, xcur, ucur);
+            }
+        }
+    }
+    
+    @Override
+    public void XS(int pos, DataBlock x, DataBlock xs) {
+        DataBlock xcur = x.start(), ycur = xs.start();
+        for (int i = 0; i < dyn.length; ++i) {
+            int rcount = dim[i];
+            int rdim = dyn[i].getInnovationsDim();
+            xcur.next(rcount);
+            if (rdim > 0) {
+                ycur.next(rdim);
+                dyn[i].XS(pos, xcur, ycur);
+            }
+        }
+    }
+    
+
+    @Override
+    public void T(int pos, SubMatrix tr
+    ) {
         SubMatrix cur = tr.topLeft();
         for (int i = 0, j = 0; i < dyn.length; ++i) {
             cur.next(dim[i], dim[i]);
@@ -222,7 +205,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void diffuseConstraints(SubMatrix b) {
+    public void diffuseConstraints(SubMatrix b
+    ) {
         // statedim * diffusedim
         SubMatrix cur = b.topLeft();
         for (int i = 0, j = 0; i < dyn.length; ++i) {
@@ -236,7 +220,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean a0(DataBlock a0, StateInfo info) {
+    public boolean a0(DataBlock a0, StateInfo info
+    ) {
         DataBlock cur = a0.start();
         for (int i = 0; i < dyn.length; ++i) {
             cur.next(dim[i]);
@@ -248,7 +233,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean Pf0(SubMatrix p, StateInfo info) {
+    public boolean Pf0(SubMatrix p, StateInfo info
+    ) {
         SubMatrix cur = p.topLeft();
         for (int i = 0; i < dyn.length; ++i) {
             cur.next(dim[i], dim[i]);
@@ -260,7 +246,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void Pi0(SubMatrix p) {
+    public void Pi0(SubMatrix p
+    ) {
         SubMatrix cur = p.topLeft();
         for (int i = 0; i < dyn.length; ++i) {
             cur.next(dim[i], dim[i]);
@@ -269,7 +256,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void TX(int pos, DataBlock x) {
+    public void TX(int pos, DataBlock x
+    ) {
         DataBlock cur = x.start();
         for (int i = 0; i < dyn.length; ++i) {
             cur.next(dim[i]);
@@ -278,7 +266,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void XT(int pos, DataBlock x) {
+    public void XT(int pos, DataBlock x
+    ) {
         DataBlock cur = x.start();
         for (int i = 0; i < dyn.length; ++i) {
             cur.next(dim[i]);
@@ -287,7 +276,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void TVT(int pos, SubMatrix v) {
+    public void TVT(int pos, SubMatrix v
+    ) {
         SubMatrix D = v.topLeft();
         for (int i = 0; i < dyn.length; ++i) {
             int ni = dim[i];
@@ -307,7 +297,8 @@ public class CompositeDynamics implements ISsfDynamics {
     }
 
     @Override
-    public void addV(int pos, SubMatrix p) {
+    public void addV(int pos, SubMatrix p
+    ) {
         SubMatrix cur = p.topLeft();
         for (int i = 0; i < dyn.length; ++i) {
             cur.next(dim[i], dim[i]);

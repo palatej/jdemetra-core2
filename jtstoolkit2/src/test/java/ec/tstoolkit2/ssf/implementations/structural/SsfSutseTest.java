@@ -111,14 +111,12 @@ public class SsfSutseTest {
         assertTrue(mssf != null);
         // gets the innovations...
         int rdim = mssf.getDynamics().getInnovationsDim();
-        Matrix Q = Matrix.square(rdim);
-        mssf.getDynamics().Q(0, Q.subMatrix());
         int dim = mssf.getDynamics().getStateDim();
         Matrix V = Matrix.square(dim);
         mssf.getDynamics().V(0, V.subMatrix());
         Matrix S = new Matrix(dim, rdim);
         mssf.getDynamics().S(0, S.subMatrix());
-        Matrix W = SymmetricMatrix.quadraticFormT(Q, S);
+        Matrix W = SymmetricMatrix.XXt(S);
         assertTrue(W.minus(V).nrm2() < 1e-6);
     }
 

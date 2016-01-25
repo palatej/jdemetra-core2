@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-/*
+ /*
  */
 package ec.tstoolkit2.ssf.implementations;
 
@@ -112,38 +112,25 @@ public class StochasticDifference extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return true;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return dyn.hasInnovations(pos);
         }
 
         @Override
-        public void Q(int pos, SubMatrix qm) {
-            dyn.Q(pos, qm);
+        public void S(int pos, SubMatrix sm) {
+            dyn.S(pos, sm.extract(ddim, dim, 0, dyn.getInnovationsDim()));
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
-            if (!dyn.hasS()) {
-                sm.subDiagonal(-ddim).set(1);
-            } else {
-                dyn.S(pos, sm.extract(ddim, dim, 0, dyn.getInnovationsDim()));
-            }
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            dyn.addSU(pos, x.range(ddim, x.getLength()), u);
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//            if (!dyn.hasS()) {
-//                y.range(ddim, y.getLength()).add(x);
-//            } else {
-//                dyn.addSX(pos, x, y.range(ddim, y.getLength()));
-//            }
-//        }
-//
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            dyn.XS(pos, x.range(ddim, x.getLength()), xs);
+        }
+
         @Override
         public void T(int pos, SubMatrix tr) {
             DataBlock row = tr.row(0);
@@ -270,7 +257,7 @@ public class StochasticDifference extends Ssf {
 
         @Override
         public double ZVZ(int pos, SubMatrix V) {
-                // (d z)(v11 v12)(d)
+            // (d z)(v11 v12)(d)
             //      (v21 v22)(z)
             // = (d*v11+z*v21)*d'+(d*v12+z*v22)*z' 
             // = d*v11*d' + z*v22*z' + 2*zv21*d'
@@ -293,7 +280,7 @@ public class StochasticDifference extends Ssf {
 
         @Override
         public void VpZdZ(int pos, SubMatrix V, double k) {
-                // V+=(d')*k*(d,z)
+            // V+=(d')*k*(d,z)
             //    (z')
             // V+=(d'*k*d d'*k*z)
             //    (z'*k*d z'*k*z)

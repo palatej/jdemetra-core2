@@ -28,7 +28,7 @@ public class DisturbanceSmoother {
 
     private double err, errVariance, esm, esmVariance, h;
     private DataBlock K, R, U;
-    private Matrix N, UVar, S, Q, SQ;
+    private Matrix N, UVar, S;
     private boolean missing, res, calcvar = true;
     private int pos, stop;
     // temporary
@@ -130,7 +130,6 @@ public class DisturbanceSmoother {
         K = new DataBlock(dim);
         U = new DataBlock(resdim);
         S = new Matrix(dim, resdim);
-        Q = Matrix.square(resdim);
         if (calcvar) {
             N = Matrix.square(dim);
             tmp = new DataBlock(dim);
@@ -141,10 +140,6 @@ public class DisturbanceSmoother {
         }
         if (dynamics.isTimeInvariant()) {
             dynamics.S(0, S.subMatrix());
-            dynamics.Q(0, Q.subMatrix());
-            SQ = S.times(Q);
-        } else {
-            SQ = new Matrix(dim, resdim);
         }
     }
 
@@ -157,10 +152,8 @@ public class DisturbanceSmoother {
             dynamics.TX(pos, K);
         }
         if (!dynamics.isTimeInvariant()) {
-            SubMatrix sm = S.subMatrix(), qm = Q.subMatrix();
+            SubMatrix sm = S.subMatrix();
             dynamics.S(pos, sm);
-            dynamics.Q(pos, qm);
-            SQ.subMatrix().product(sm, qm);
         }
         if (!measurement.isTimeInvariant()) {
             h = measurement.errorVariance(pos);
@@ -176,15 +169,15 @@ public class DisturbanceSmoother {
         if (res) {
             esm = c * h;
         }
-        U.product(R, SQ.columns());
+        dynamics.XS(pos, R, U);
         if (calcvar) {
             if (res) {
                 esmVariance = h - h * h * v;
             }
-            // v(U) = Q-Q'S'NSQ
-            UVar.copy(Q);
-            Matrix V = SymmetricMatrix.quadraticForm(N, SQ);
-            UVar.sub(V);
+            // v(U) = I-S'NS
+            SymmetricMatrix.quadraticForm(N.subMatrix(), S.subMatrix(), UVar.subMatrix());
+            UVar.chs();
+            UVar.diagonal().add(1);
         }
         return true;
     }

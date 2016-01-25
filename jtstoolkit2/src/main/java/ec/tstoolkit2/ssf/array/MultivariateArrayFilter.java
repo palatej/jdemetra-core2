@@ -131,7 +131,7 @@ public class MultivariateArrayFilter {
         R().set(0);
         measurements.R(pos, R());
         U().set(0);
-        dynamics.U(pos, U());
+        dynamics.S(pos, U());
         K().set(0);
     }
 

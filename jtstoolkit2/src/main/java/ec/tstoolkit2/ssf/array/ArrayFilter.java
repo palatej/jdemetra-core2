@@ -115,7 +115,7 @@ public class ArrayFilter {
         m_.ZM(pos_, L(), ZL());
         dyn_.TM(pos_, L());
         U().set(0);
-        dyn_.U(pos_, U());
+        dyn_.S(pos_, U());
         K().set(0);
         if (m_.hasError(pos_))
             A.set(0,0, Math.sqrt(m_.errorVariance(pos_)));

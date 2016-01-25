@@ -61,18 +61,13 @@ public interface ISsfDynamics {
      * Variance matrix of the innovations in the transition equation. V is also
      * modelled as
      *
-     * V = S*Q*S' 
-     *
-     * V = d x d where d = getStateDim() Q = q x q where q = getInnovationsDim()
-     * S = d x q
-     *
-     * When S = I (d = q), it should be considered as missing.
-     *
      * Another (non unique) modelling is
      *
-     * V = U*U'
+     * V = S*S'
+     * 
+     * Wher the m columns of S are independent. m corresponds to innovationsDim 
      * This modelling is useful in square root algorithms. It is used for instance
-     * in De Jong.
+     * in De Jong. De dimension of the U matrix
      *
      * @param pos
      * @param qm
@@ -80,35 +75,10 @@ public interface ISsfDynamics {
     void V(int pos, SubMatrix qm);
 
     /**
-     * The default implementation computes S*L where L*L' = Q
      * @param pos
      * @param cm
      */
-    default void U(int pos, SubMatrix cm){
-        if (hasS()){
-            S(pos, cm);
-            // C = S * L, where L*L'=Q
-            int nres=getInnovationsDim();
-            Matrix L=Matrix.square(nres);
-            Q(pos, L.subMatrix());
-            if (nres == 1){
-                cm.mul(Math.sqrt(L.get(0, 0)));
-            }else{
-                SymmetricMatrix.lcholesky(L);
-                LowerTriangularMatrix.lmul(L, cm);
-            }
-        }else{
-            Matrix L=Matrix.square(getStateDim());
-            V(pos, L.subMatrix());
-            SymmetricMatrix.lcholesky(L, State.ZERO);
-            cm.copy(L.subMatrix());
-        }
-    }
-
-    /**
-     * @return
-     */
-    boolean hasS();
+    void S(int pos, SubMatrix cm);
 
     /**
      *
@@ -117,29 +87,6 @@ public interface ISsfDynamics {
      */
     boolean hasInnovations(int pos);
 
-    /**
-     *
-     * @param pos
-     * @param qm
-     */
-    void Q(int pos, SubMatrix qm);
-
-    /**
-     *
-     * @param pos
-     * @param sm
-     */
-    void S(int pos, SubMatrix sm);
-    
-//    /**
-//     * Computes y = y + S * x
-//     * This method is used is smoothing and simulations
-//     * S~dim * nres, x ~ nres, 
-//     * @param pos
-//     * @param x 
-//     * @param y 
-//     */
-//    void addSX(int pos, DataBlock x, DataBlock y);
 
     /**
      * Gets the transition matrix.
@@ -220,6 +167,25 @@ public interface ISsfDynamics {
      * @param x
      */
     void TX(int pos, DataBlock x);
+
+    /**
+     * Computes xs = x*S(pos)
+     *
+     * @param pos
+     * @param x 
+     * @param xs 
+     */
+    void XS(int pos, DataBlock x, DataBlock xs);
+
+    /**
+     * Computes x=x+ S(pos) * u. The dimension of u should correspond to the 
+     * number of columns of S(po)
+     *
+     * @param pos
+     * @param x 
+     * @param u 
+     */
+    void addSU(int pos, DataBlock x, DataBlock u);
 
     /**
      * Computes T(pos) * M

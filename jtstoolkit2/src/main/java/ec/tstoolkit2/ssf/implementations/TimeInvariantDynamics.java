@@ -26,52 +26,26 @@ public class TimeInvariantDynamics implements ISsfDynamics {
             int ne = sd.getInnovationsDim();
             Matrix V = Matrix.square(n);
             sd.V(0, V.subMatrix());
-            if (n == ne) {
-                return new Innovations(V);
-            }
-            Matrix Q = Matrix.square(ne);
             Matrix S = new Matrix(n, ne);
-            Matrix C = new Matrix(n, ne);
-            sd.Q(0, Q.subMatrix());
             sd.S(0, S.subMatrix());
-            sd.U(0, C.subMatrix());
-            return new Innovations(V, Q, S, C);
+            return new Innovations(V, S);
         }
 
         public Innovations(final Matrix V) {
             this.V = V;
             S = null;
-            Q = V;
-            C = null;
         }
 
-        public Innovations(final Matrix V, final Matrix Q, final Matrix S) {
-            this.Q = Q;
+        public Innovations(final Matrix V, final Matrix S) {
             this.S = S;
-            this.C = null;
-            if (V == null) {
-                this.V = SymmetricMatrix.quadraticFormT(Q, S);
+            if (V == null && S != null) {
+                this.V = SymmetricMatrix.XXt(S);
             } else {
                 this.V = V;
             }
         }
 
-        public Innovations(final Matrix V, final Matrix Q, final Matrix S, final Matrix C) {
-            this.Q = Q;
-            this.S = S;
-            this.C = C;
-            if (V == null) {
-                if (C != null) {
-                    this.V = SymmetricMatrix.XXt(C);
-                } else {
-                    this.V = SymmetricMatrix.quadraticFormT(Q, S);
-                }
-            } else {
-                this.V = V;
-            }
-        }
-
-        public final Matrix S, Q, V, C;
+        public final Matrix S, V;
     }
 
     public static class Initialization {
@@ -148,9 +122,10 @@ public class TimeInvariantDynamics implements ISsfDynamics {
     }
 
     private final Matrix T;
-    private final Matrix S, Q, V, C;
+    private final Matrix V;
+    private transient Matrix S;
 
-    private final Matrix Pf0, Pi0, B0;
+    private final Matrix Pf0, B0;
     private final DataBlock a0;
     private final StateInfo initial;
 
@@ -158,13 +133,11 @@ public class TimeInvariantDynamics implements ISsfDynamics {
         this.T = T;
         this.B0 = I.B0;
         this.Pf0 = I.P0;
-        this.Pi0 = I.Pi0;
         this.a0 = I.a0;
         this.initial = I.initial;
-        this.Q = E.Q;
         this.S = E.S;
         this.V = E.V;
-        this.C = E.C;
+
     }
 
     public static TimeInvariantDynamics of(ISsfDynamics sd, StateInfo info) {
@@ -185,6 +158,13 @@ public class TimeInvariantDynamics implements ISsfDynamics {
         return new TimeInvariantDynamics(t, e, i);
     }
 
+    private synchronized void checkS() {
+        if (S == null) {
+            S = V.clone();
+            SymmetricMatrix.lcholesky(S);
+        }
+    }
+
     @Override
     public int getStateDim() {
         return T.getColumnsCount();
@@ -202,7 +182,7 @@ public class TimeInvariantDynamics implements ISsfDynamics {
 
     @Override
     public int getInnovationsDim() {
-        return Q.getColumnsCount();
+        return S == null ? getStateDim() : S.getColumnsCount();
     }
 
     @Override
@@ -211,35 +191,28 @@ public class TimeInvariantDynamics implements ISsfDynamics {
     }
 
     @Override
-    public boolean hasS() {
-        return S != null;
-    }
-
-    @Override
     public boolean hasInnovations(int pos) {
-        return true;
-    }
-
-    @Override
-    public void Q(int pos, SubMatrix qm) {
-        qm.copy(Q.subMatrix());
+        return V != null;
     }
 
     @Override
     public void S(int pos, SubMatrix sm) {
-        if (S != null) {
-            sm.copy(S.subMatrix());
-        }
+        checkS();
+        sm.copy(S.subMatrix());
     }
 
-//    @Override
-//    public void addSX(int pos, DataBlock x, DataBlock y) {
-//        if (S != null)
-//            y.addProduct(S.rows(), x);
-//        else
-//            y.add(x);
-//    }
-//    
+    @Override
+    public void addSU(int pos, DataBlock x, DataBlock u) {
+        checkS();
+        x.addProduct(S.rows(), u);
+    }
+
+    @Override
+    public void XS(int pos, DataBlock x, DataBlock xs) {
+        checkS();
+        xs.product(x, S.columns());
+    }
+
     @Override
     public void T(int pos, SubMatrix tr) {
         tr.copy(T.subMatrix());

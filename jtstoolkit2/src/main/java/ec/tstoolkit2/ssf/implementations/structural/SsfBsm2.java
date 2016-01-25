@@ -190,22 +190,23 @@ public class SsfBsm2 extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return false;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
         }
 
-        @Override
-        public void Q(int pos, SubMatrix q) {
-            V(pos, q);
+//        @Override
+        public void S(int pos, SubMatrix s) {
+            //TODO
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            //TODO
+        }
+        
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            //TODO
         }
 
 //        @Override

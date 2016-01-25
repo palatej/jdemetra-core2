@@ -16,6 +16,7 @@
  */
 package ec.tstoolkit2.ssf.implementations.structural;
 
+import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.maths.matrices.Matrix;
 import ec.tstoolkit.maths.matrices.SubMatrix;
 import ec.tstoolkit.utilities.DoubleList;
@@ -207,23 +208,38 @@ public class SsfSutse extends MultivariateSsf {
             this.ist0 = ist0;
         }
 
-        @Override
-        public void Q(int pos, SubMatrix v) {
-            v.copy(var.subMatrix());
-        }
+//        @Override
+//        public void Q(int pos, SubMatrix v) {
+//            v.copy(var.subMatrix());
+//        }
+//
+//        @Override
+//        public boolean hasS() {
+//            return true;
+//        }
 
-        @Override
-        public boolean hasS() {
-            return true;
-        }
-
+//        @Override
+//        public void S(int pos, SubMatrix s) {
+//            for (int r = 0; r < s.getRowsCount(); ++r) {
+//                for (int c = 0; c < s.getColumnsCount(); ++c) {
+//                    s.set(ivar[c], c, 1);
+//                }
+//            }
+//        }
+//        
         @Override
         public void S(int pos, SubMatrix s) {
-            for (int r = 0; r < s.getRowsCount(); ++r) {
-                for (int c = 0; c < s.getColumnsCount(); ++c) {
-                    s.set(ivar[c], c, 1);
-                }
-            }
+            //TODO
+        }
+
+        @Override
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            //TODO
+        }
+        
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            //TODO
         }
 
         @Override

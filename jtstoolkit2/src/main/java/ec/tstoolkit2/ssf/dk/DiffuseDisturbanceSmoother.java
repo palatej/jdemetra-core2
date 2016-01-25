@@ -32,7 +32,7 @@ public class DiffuseDisturbanceSmoother {
 
     private double e, f, esm, esmVariance, h, fi;
     private DataBlock C, Ci, R, Ri, U;
-    private Matrix N, UVar, S, Q, SQ;
+    private Matrix N, UVar, S;
     private boolean missing, res, calcvar = true;
     private int pos;
     // temporary
@@ -74,7 +74,6 @@ public class DiffuseDisturbanceSmoother {
         Ci = new DataBlock(dim);
         U = new DataBlock(resdim);
         S = new Matrix(dim, resdim);
-        Q = Matrix.square(resdim);
         if (calcvar) {
             N = Matrix.square(dim);
             tmp = new DataBlock(dim);
@@ -85,10 +84,6 @@ public class DiffuseDisturbanceSmoother {
         }
         if (dynamics.isTimeInvariant()) {
             dynamics.S(0, S.subMatrix());
-            dynamics.Q(0, Q.subMatrix());
-            SQ = S.times(Q);
-        } else {
-            SQ = new Matrix(dim, resdim);
         }
     }
 
@@ -108,10 +103,9 @@ public class DiffuseDisturbanceSmoother {
         }
         missing = !DescriptiveStatistics.isFinite(e);
         if (!dynamics.isTimeInvariant()) {
-            SubMatrix sm = S.subMatrix(), qm = Q.subMatrix();
+            S.clear();
+            SubMatrix sm = S.subMatrix();
             dynamics.S(pos, sm);
-            dynamics.Q(pos, qm);
-            SQ.subMatrix().product(sm, qm);
         }
         if (!measurement.isTimeInvariant()) {
             h = measurement.errorVariance(pos);
@@ -131,7 +125,7 @@ public class DiffuseDisturbanceSmoother {
                 esm = Double.NaN;
             }
         }
-        U.product(R, SQ.columns());
+        dynamics.XS(pos, R, U);
         if (calcvar) {
             if (res) {
                 if (!missing) {
@@ -140,10 +134,11 @@ public class DiffuseDisturbanceSmoother {
                     esmVariance = Double.NaN;
                 }
             }
-            // v(U) = Q-QS'NSQ
-            UVar.copy(Q);
-            Matrix V = SymmetricMatrix.quadraticForm(N, SQ);
-            UVar.sub(V);
+            // v(U) = I-S'NS
+            UVar.clear();
+            SymmetricMatrix.quadraticForm(N.subMatrix(), S.subMatrix(), UVar.subMatrix());
+            UVar.chs();
+            UVar.diagonal().add(1);
         }
         return true;
     }

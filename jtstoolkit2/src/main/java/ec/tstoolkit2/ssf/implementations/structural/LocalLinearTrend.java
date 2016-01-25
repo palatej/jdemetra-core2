@@ -24,22 +24,20 @@ import ec.tstoolkit2.ssf.implementations.Measurement;
 import ec.tstoolkit2.ssf.univariate.Ssf;
 
 /**
- * Usual local linear trend 
- * y(t)=l(t)+n(t)
- * l(t+1)=s(t)+l(t)+u(t) 
+ * Usual local linear trend y(t)=l(t)+n(t) l(t+1)=s(t)+l(t)+u(t)
  * s(t+1)=s(t)+v(t)
  *
  * @author Jean Palate
  */
 public class LocalLinearTrend extends Ssf {
-    
-    private final double lv,sv,nv;
+
+    private final double lv, sv, nv;
 
     public LocalLinearTrend(double lvar, double svar, double nvar) {
         super(new Dynamics(lvar, svar), Measurement.create(0, nvar));
-        lv=lvar;
-        sv=svar;
-        nv=nvar;        
+        lv = lvar;
+        sv = svar;
+        nv = nvar;
     }
 
     public double getVariance() {
@@ -109,36 +107,44 @@ public class LocalLinearTrend extends Ssf {
         }
 
         @Override
-        public boolean hasS() {
-            return lvar == 0 || svar == 0;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return lvar != 0 || svar != 0;
         }
 
+//        @Override
+//        public void Q(int pos, SubMatrix qm) {
+//            int i = 0;
+//            if (lvar > 0) {
+//                qm.set(0, 0, lvar);
+//                i = 1;
+//            }
+//            if (svar > 0) {
+//                qm.set(i, i, svar);
+//            }
+//        }
+//
+//        @Override
+//        public void S(int pos, SubMatrix sm) {
+//            if (svar == 0 && lvar != 0) {
+//                sm.set(1, 0, 1);
+//            } else if (svar != 0 && lvar == 0) {
+//                sm.set(0, 0, 1);
+//            }
+//        }
         @Override
-        public void Q(int pos, SubMatrix qm) {
-            int i = 0;
-            if (lvar > 0) {
-                qm.set(0, 0, lvar);
-                i = 1;
-            }
-            if (svar > 0) {
-                qm.set(i, i, svar);
-            }
+        public void S(int pos, SubMatrix s) {
+            //TODO
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
-            if (svar == 0 && lvar != 0) {
-                sm.set(1, 0, 1);
-            } else if (svar != 0 && lvar == 0) {
-                sm.set(0, 0, 1);
-            }
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            //TODO
         }
-
+        
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            //TODO
+        }
 //        @Override
 //        public void addSX(int pos, DataBlock x, DataBlock y) {
 //            if (svar == 0 && lvar != 0) {
@@ -149,6 +155,7 @@ public class LocalLinearTrend extends Ssf {
 //            y.add(x);
 //        }
 //
+
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.set(0, 0, 1);

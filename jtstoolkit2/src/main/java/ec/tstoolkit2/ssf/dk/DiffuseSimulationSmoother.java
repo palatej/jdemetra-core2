@@ -59,8 +59,6 @@ public class DiffuseSimulationSmoother {
     private static final double EPS = 1e-8;
 
     private Matrix LA;
-    private Matrix[] LQ;
-    private Matrix[] Q, S, SQ;
     private final ISsf ssf;
     private final ISsfData data;
     private final ISsfDynamics dynamics;
@@ -86,59 +84,6 @@ public class DiffuseSimulationSmoother {
         return new Simulation();
     }
 
-    private Matrix lq(int pos) {
-        if (LQ.length == 1) {
-            return LQ[0];
-        } else if (pos < LQ.length) {
-            return LQ[pos];
-        } else {
-            Matrix Q = Matrix.square(dynamics.getInnovationsDim());
-            dynamics.Q(pos, Q.subMatrix());
-            SymmetricMatrix.lcholesky(Q, EPS);
-            return Q;
-        }
-    }
-
-    private Matrix S(int pos) {
-        if (S.length == 1) {
-            return S[0];
-        } else if (pos < S.length) {
-            return S[pos];
-        } else if (!dynamics.hasS()) {
-            return null;
-        } else {
-            Matrix s = new Matrix(dynamics.getStateDim(), dynamics.getInnovationsDim());
-            dynamics.S(pos, s.subMatrix());
-            return s;
-        }
-    }
-
-    private Matrix SQ(int pos) {
-        if (SQ.length == 1) {
-            return SQ[0];
-        } else if (pos < SQ.length) {
-            return SQ[pos];
-        } else if (!dynamics.hasS()) {
-            return Q(pos);
-        } else {
-            Matrix s = new Matrix(dynamics.getStateDim(), dynamics.getInnovationsDim());
-            dynamics.S(pos, s.subMatrix());
-            return s.times(Q(pos));
-        }
-    }
-
-    private Matrix Q(int pos) {
-        if (Q.length == 1) {
-            return Q[0];
-        } else if (pos < Q.length) {
-            return Q[pos];
-        } else {
-            Matrix Q = Matrix.square(dynamics.getInnovationsDim());
-            dynamics.Q(pos, Q.subMatrix());
-            return Q;
-        }
-    }
-
     private double lh(int pos) {
         return Math.sqrt(ssf.getMeasurement().errorVariance(pos));
     }
@@ -153,33 +98,10 @@ public class DiffuseSimulationSmoother {
         dynamics.Pf0(LA.subMatrix(), StateInfo.Forecast);
         SymmetricMatrix.lcholesky(LA, EPS);
 
-        if (dynamics.isTimeInvariant()) {
-            Q = new Matrix[1];
-            LQ = new Matrix[1];
-            S = new Matrix[1];
-            SQ = new Matrix[1];
-        } else {
-            Q = new Matrix[data.getLength()];
-            LQ = new Matrix[data.getLength()];
-            S = new Matrix[data.getLength()];
-            SQ = new Matrix[data.getLength()];
-        }
-        for (int i = 0; i < Q.length; ++i) {
-            Matrix q = Matrix.square(resdim);
-            dynamics.Q(i, q.subMatrix());
-            Q[i] = q.clone();
-            Matrix s = new Matrix(dim, resdim);
-            dynamics.S(i, s.subMatrix());
-            S[i] = s;
-            SQ[i] = s.times(q);
-            SymmetricMatrix.lcholesky(q, EPS);
-            LQ[i] = q;
-        }
     }
 
     private void generateTransitionRandoms(int pos, DataBlock u) {
         fillRandoms(u);
-        LowerTriangularMatrix.rmul(lq(pos), u);
     }
 
     private void generateMeasurementRandoms(DataBlock e) {
@@ -260,7 +182,7 @@ public class DiffuseSimulationSmoother {
                         esm.set(pos, Double.NaN);
                     }
                 }
-                U.product(R, SQ(pos).columns());
+                dynamics.XS(pos, R, U);
                 smoothedInnovations.save(pos, U);
             }
         }
@@ -314,7 +236,7 @@ public class DiffuseSimulationSmoother {
                         esm.set(pos, Double.NaN);
                     }
                 }
-                U.product(R, SQ(pos).columns());
+                dynamics.XS(pos, R, U);
                 smoothedInnovations.save(pos, U);
             }
         }
@@ -364,7 +286,7 @@ public class DiffuseSimulationSmoother {
             do {
                 // next: a(t+1) = T a(t) + S*r(t)
                 dynamics.TX(cur, a);
-                a.addProduct(smoothedInnovations.block(cur), S(cur).rows());
+                dynamics.addSU(cur, a, smoothedInnovations.block(cur));
                 smoothedStates.save(cur++, a);
             } while (cur < n);
         }
@@ -431,7 +353,7 @@ public class DiffuseSimulationSmoother {
                 q.mul(std);
                 transitionInnovations.save(i - 1, q);
                 dynamics.TX(i, a);
-                a.addProduct(S(i).rows(), q);
+                dynamics.addSU(i, a, q);
                 states.save(i, a);
                 simulatedData[i] = measurement.ZX(i, a);
                 if (measurementErrors != null) {

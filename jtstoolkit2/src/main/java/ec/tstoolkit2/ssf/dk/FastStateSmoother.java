@@ -35,7 +35,6 @@ public class FastStateSmoother {
 
     private ISsfDynamics dynamics;
     private ISsfMeasurement measurement;
-    private Matrix S;
 
     public DataBlockStorage process(ISsf ssf, ISsfData data) {
         initSsf(ssf);
@@ -50,8 +49,7 @@ public class FastStateSmoother {
         do {
             // next: a(t+1) = T a(t) + S*r(t)
             dynamics.TX(pos, a);
-            loadInfo(pos);
-            a.addProduct(srslts.u(pos), S.rows());
+            dynamics.addSU(pos, a, srslts.u(pos));
             // T
             storage.save(pos++, a);
         } while (pos < n);
@@ -63,10 +61,6 @@ public class FastStateSmoother {
         dynamics = ssf.getDynamics();
         measurement = ssf.getMeasurement();
         int dim = dynamics.getStateDim(), resdim = dynamics.getInnovationsDim();
-        S = new Matrix(dim, resdim);
-        if (dynamics.isTimeInvariant()) {
-            dynamics.S(0, S.subMatrix());
-        }
     }
 
     private DataBlock initialState(ISsf ssf, ISsfData data, IDisturbanceSmoothingResults srslts) {
@@ -83,10 +77,5 @@ public class FastStateSmoother {
         }
     }
 
-    private void loadInfo(int pos) {
-        if (!dynamics.isTimeInvariant()) {
-            dynamics.S(pos, S.subMatrix());
-        }
-    }
 
 }

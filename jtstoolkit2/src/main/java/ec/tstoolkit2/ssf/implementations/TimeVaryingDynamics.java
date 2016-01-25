@@ -20,7 +20,9 @@ package ec.tstoolkit2.ssf.implementations;
 
 import ec.tstoolkit.data.DataBlock;
 import ec.tstoolkit.data.IReadDataBlock;
+import ec.tstoolkit.maths.matrices.Matrix;
 import ec.tstoolkit.maths.matrices.SubMatrix;
+import ec.tstoolkit.maths.matrices.SymmetricMatrix;
 import ec.tstoolkit2.ssf.ISsfDynamics;
 import ec.tstoolkit2.ssf.StateInfo;
 
@@ -40,14 +42,18 @@ public class TimeVaryingDynamics {
 
     static class TimeVaryingDiag implements ISsfDynamics {
 
-        private final DataBlock var;
+        private final DataBlock var, std;
 
         TimeVaryingDiag(final double[] var) {
             this.var = new DataBlock(var);
+            this.std = new DataBlock(var);
+            std.sqrt();
         }
 
         TimeVaryingDiag(final IReadDataBlock var) {
             this.var = new DataBlock(var);
+            this.std = new DataBlock(var);
+            std.sqrt();
         }
 
         @Override
@@ -76,29 +82,31 @@ public class TimeVaryingDynamics {
         }
 
         @Override
-        public boolean hasS() {
-            return false;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
         }
 
         @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.diagonal().copy(var);
+        public void S(int pos, SubMatrix sm) {
+            sm.diagonal().copy(std);
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            int n=x.getLength();
+            for (int i=0; i<n; ++i){
+                x.add(i, u.get(i)*std.get(i));
+            }
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//            y.add(x);
-//        }
-//
+        @Override
+
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            int n=x.getLength();
+            for (int i=0; i<n; ++i){
+                xs.set(i, x.get(i)*std.get(i));
+            }
+        }
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.diagonal().set(1);
@@ -154,10 +162,18 @@ public class TimeVaryingDynamics {
 
     static class TimeVaryingFull implements ISsfDynamics {
 
-        private final SubMatrix var;
+        private final SubMatrix var, s;
 
         TimeVaryingFull(final SubMatrix var) {
             this.var = var;
+            Matrix S=new Matrix(var);
+            SymmetricMatrix.lcholesky(S, 1e-9);
+            s=S.subMatrix();
+        }
+
+        TimeVaryingFull(final SubMatrix var, final SubMatrix s) {
+            this.var = var;
+            this.s=s;
         }
 
         @Override
@@ -186,29 +202,25 @@ public class TimeVaryingDynamics {
         }
 
         @Override
-        public boolean hasS() {
-            return false;
-        }
-
-        @Override
         public boolean hasInnovations(int pos) {
             return true;
         }
 
         @Override
-        public void Q(int pos, SubMatrix qm) {
-            qm.copy(var);
+        public void S(int pos, SubMatrix sm) {
+            sm.copy(s);
         }
 
         @Override
-        public void S(int pos, SubMatrix sm) {
+        public void addSU(int pos, DataBlock x, DataBlock u) {
+            x.addProduct(s.rows(), u);
         }
 
-//        @Override
-//        public void addSX(int pos, DataBlock x, DataBlock y) {
-//            y.add(x);
-//        }
-//
+        @Override
+        public void XS(int pos, DataBlock x, DataBlock xs) {
+            xs.product(x, s.columns());
+        }
+
         @Override
         public void T(int pos, SubMatrix tr) {
             tr.diagonal().set(1);
